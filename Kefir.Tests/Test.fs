@@ -62,7 +62,7 @@ type Test() =
     [<Test>]
     member x.``ISO date literals should be parsed correctly``() =
         let sut = DateParser(anchorDate)
-        let expected = SuccessfulParse(DateTime(2012,3,5))
-        let actual = sut.Parse("20120306")
+        let expected = SuccessfulParse(DateTime(2012,3,6))
+        let actual = sut.Parse("2012-03-06")
         Assert.AreEqual(expected, actual)
 

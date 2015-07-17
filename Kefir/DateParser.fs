@@ -40,27 +40,42 @@ module InternalParsers =
         |>> fun shiftSize -> float(shiftSize * shiftType.ShiftInDays)
 
     let fromP (shiftType:AbsoluteShift) parser= 
-        shiftP shiftType
-        .>> spaces 
-        .>>? ParserCreators.createConsumingParser ["from"; "after"]
-        .>> spaces 
-        .>>. parser
-        |>> fun (shift, dateTransf) -> ((fun (date:DateTime) -> date.AddDays(shift)) >> dateTransf)
-    
+        attempt (
+            shiftP shiftType
+            .>> spaces 
+            .>> ParserCreators.createConsumingParser ["from"; "after"]
+            .>> spaces 
+            .>>. parser
+            |>> fun (shift, dateTransf) -> ((fun (date:DateTime) -> date.AddDays(shift)) >> dateTransf)
+        )
     let beforeP (shiftType:AbsoluteShift) parser = 
-        shiftP shiftType
-        .>> spaces 
-        .>>? ParserCreators.createConsumingParser ["before"]
-        .>> spaces 
-        .>>. parser
-        |>> fun (shift, dateTransf) -> ((fun (date:DateTime) -> date.AddDays(-shift)) >> dateTransf)
-
+        attempt (
+            shiftP shiftType
+            .>> spaces 
+            .>> ParserCreators.createConsumingParser ["before"]
+            .>> spaces 
+            .>>. parser
+            |>> fun (shift, dateTransf) -> ((fun (date:DateTime) -> date.AddDays(-shift)) >> dateTransf)
+        )
     let agoP (shiftType:AbsoluteShift) = 
-        shiftP shiftType
-        .>> spaces 
-        .>>? ParserCreators.createConsumingParser ["ago"]
-        |>> fun (shift) -> ((fun (date:DateTime) -> date.AddDays(-shift)))
-
+        attempt (
+            shiftP shiftType
+            .>> spaces 
+            .>>? ParserCreators.createConsumingParser ["ago"]
+            |>> fun (shift) -> ((fun (date:DateTime) -> date.AddDays(-shift)))
+        )
+    let fallbackP =
+        attempt (
+            many1CharsTill
+                (noneOf " \n\t") 
+                ((skipAnyOf " \n\t") <|> eof)
+                >>=
+                    (fun x -> 
+                    DateTime.TryParse(x) // DateTime.TryParseExact(x,["yyyymmdd"],Globalization.CultureInfo.InvariantCulture, Globalization.DateTimeStyles.None)
+                    |> function
+                        | (true, date) -> preturn(fun _ -> date)
+                        | (false,_) -> fail "date not recognized")
+        )    
 
 type DateParser(?baseDate : DateTime) = 
     let bDate = defaultArg baseDate DateTime.Now  
@@ -76,6 +91,7 @@ type DateParser(?baseDate : DateTime) =
             InternalParsers.agoP {ShiftInDays = 1 ; Labels = ["days"; "day"]}
             InternalParsers.fromP {ShiftInDays = 1 ; Labels = ["days"; "day"]} pars
             InternalParsers.beforeP {ShiftInDays = 1 ; Labels = ["days"; "day"]} pars
+            InternalParsers.fallbackP
         ]
         pars
     
