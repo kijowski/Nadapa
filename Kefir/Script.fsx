@@ -18,7 +18,7 @@ x?absolute.AsArray() |> Seq.iter (printfn "%A")
 #r @"FParsec.dll"
 
 #load "DateParser.fs"
-open Kefir
+open Nadapa
 let sut = DateParser()
 sut.Parse("today")
 sut.Parse("3 days before now")

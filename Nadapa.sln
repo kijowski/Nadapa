@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Kefir", "Kefir\Kefir.fsproj", "{15AFC65E-5033-4AEF-8F9D-8542E8EA03B8}"
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Nadapa", "Kefir\Nadapa.fsproj", "{15AFC65E-5033-4AEF-8F9D-8542E8EA03B8}"
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Kefir.Tests", "Kefir.Tests\Kefir.Tests.fsproj", "{2C9E6ED0-9509-4285-A41A-876CC52E7E74}"
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Nadapa.Tests", "Kefir.Tests\Nadapa.Tests.fsproj", "{2C9E6ED0-9509-4285-A41A-876CC52E7E74}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

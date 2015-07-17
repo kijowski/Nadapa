@@ -1,7 +1,7 @@
-﻿namespace Kefir.Tests
+﻿namespace Nadapa.Tests
 open System
 open NUnit.Framework
-open Kefir
+open Nadapa
 
 [<TestFixture>]
 type Test() = 
