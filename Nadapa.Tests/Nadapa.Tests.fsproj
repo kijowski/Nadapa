@@ -6,7 +6,7 @@
     <ProjectGuid>{2C9E6ED0-9509-4285-A41A-876CC52E7E74}</ProjectGuid>
     <OutputType>Library</OutputType>
     <RootNamespace>Nadapa.Tests</RootNamespace>
-    <AssemblyName>Kefir.Tests</AssemblyName>
+    <AssemblyName>Nadapa.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -51,7 +51,7 @@
     <None Include="app.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Kefir\Nadapa.fsproj">
+    <ProjectReference Include="..\Nadapa\Nadapa.fsproj">
       <Project>{15AFC65E-5033-4AEF-8F9D-8542E8EA03B8}</Project>
       <Name>Nadapa</Name>
     </ProjectReference>
