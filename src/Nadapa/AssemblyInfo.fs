@@ -1,20 +1,12 @@
-namespace Nadapa
+﻿namespace System
 open System.Reflection
-open System.Runtime.CompilerServices
 
-[<assembly: AssemblyTitle("Nadapa")>]
-[<assembly: AssemblyDescription("")>]
-[<assembly: AssemblyConfiguration("")>]
-[<assembly: AssemblyCompany("")>]
-[<assembly: AssemblyProduct("")>]
-[<assembly: AssemblyCopyright("michal")>]
-[<assembly: AssemblyTrademark("")>]
+[<assembly: AssemblyTitleAttribute("Nadapa")>]
+[<assembly: AssemblyProductAttribute("Nadapa")>]
+[<assembly: AssemblyDescriptionAttribute("Simple micro-library for human readable dates parsing.")>]
+[<assembly: AssemblyVersionAttribute("0.0.1")>]
+[<assembly: AssemblyFileVersionAttribute("0.0.1")>]
+do ()
 
-// The assembly version has the format {Major}.{Minor}.{Build}.{Revision}
-
-[<assembly: AssemblyVersion("1.0.0.0")>]
-
-//[<assembly: AssemblyDelaySign(false)>]
-//[<assembly: AssemblyKeyFile("")>]
-
-()
+module internal AssemblyVersionInformation =
+    let [<Literal>] Version = "0.0.1"

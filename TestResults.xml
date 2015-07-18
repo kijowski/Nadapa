@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!--This file represents the results of running a test suite-->
+<test-results name="/Users/michal/Code/Nadapa/tests/Nadapa.Tests/bin/Release/Nadapa.Tests.dll" total="35" errors="0" failures="0" not-run="0" inconclusive="0" ignored="0" skipped="0" invalid="0" date="2015-07-19" time="00:37:09">
+  <environment nunit-version="2.6.4.14350" clr-version="4.0.30319.17020" os-version="Unix 14.4.0.0" platform="Unix" cwd="/Users/michal/Code/Nadapa" machine-name="Michals-MacBook-Pro.local" user="michal" user-domain="Michals-MacBook-Pro.local" />
+  <culture-info current-culture="en-GB" current-uiculture="en-GB" />
+  <test-suite type="Assembly" name="/Users/michal/Code/Nadapa/tests/Nadapa.Tests/bin/Release/Nadapa.Tests.dll" executed="True" result="Success" success="True" time="0.167" asserts="0">
+    <results>
+      <test-suite type="Namespace" name="Nadapa" executed="True" result="Success" success="True" time="0.163" asserts="0">
+        <results>
+          <test-suite type="Namespace" name="Tests" executed="True" result="Success" success="True" time="0.163" asserts="0">
+            <results>
+              <test-suite type="TestFixture" name="BasicParsing" executed="True" result="Success" success="True" time="0.156" asserts="0">
+                <results>
+                  <test-suite type="ParameterizedTest" name="ago based backward day shifts should be parsed correctly" executed="True" result="Success" success="True" time="0.059" asserts="0">
+                    <results>
+                      <test-case name="Nadapa.Tests.BasicParsing.ago based backward day shifts should be parsed correctly(&quot;3 days ago&quot;)" executed="True" result="Success" success="True" time="0.057" asserts="1" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="ParameterizedTest" name="bad input should not be parsed correctly" executed="True" result="Success" success="True" time="0.034" asserts="0">
+                    <results>
+                      <test-case name="Nadapa.Tests.BasicParsing.bad input should not be parsed correctly(&quot;today today&quot;)" executed="True" result="Success" success="True" time="0.013" asserts="0">
+                        <reason>
+                          <message><![CDATA[Success: got following error: Error in Ln: 1 Col: 7
+today today
+      ^
+Expecting: end of input
+]]></message>
+                        </reason>
+                      </test-case>
+                      <test-case name="Nadapa.Tests.BasicParsing.bad input should not be parsed correctly(&quot;random input&quot;)" executed="True" result="Success" success="True" time="0.018" asserts="0">
+                        <reason>
+                          <message><![CDATA[Success: got following error: Error in Ln: 1 Col: 1
+random input
+^
+Expecting: integer number (32-bit, signed), 'now' (case-insensitive), 'tdy'
+(case-insensitive), 'tmr' (case-insensitive), 'today' (case-insensitive),
+'tommorow' (case-insensitive), 'tommorrow' (case-insensitive), 'tomorow'
+(case-insensitive), 'tomorrow' (case-insensitive), 'ye' (case-insensitive),
+'yest' (case-insensitive) or 'yesterday' (case-insensitive)
+
+The parser backtracked after:
+  Error in Ln: 1 Col: 8
+  random input
+         ^
+  date not recognized
+]]></message>
+                        </reason>
+                      </test-case>
+                      <test-case name="Nadapa.Tests.BasicParsing.bad input should not be parsed correctly(&quot;tmrm&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="0">
+                        <reason>
+                          <message><![CDATA[Success: got following error: Error in Ln: 1 Col: 4
+tmrm
+   ^
+Expecting: end of input
+]]></message>
+                        </reason>
+                      </test-case>
+                      <test-case name="Nadapa.Tests.BasicParsing.bad input should not be parsed correctly(&quot;toddday&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="0">
+                        <reason>
+                          <message><![CDATA[Success: got following error: Error in Ln: 1 Col: 1
+toddday
+^
+Expecting: integer number (32-bit, signed), 'now' (case-insensitive), 'tdy'
+(case-insensitive), 'tmr' (case-insensitive), 'today' (case-insensitive),
+'tommorow' (case-insensitive), 'tommorrow' (case-insensitive), 'tomorow'
+(case-insensitive), 'tomorrow' (case-insensitive), 'ye' (case-insensitive),
+'yest' (case-insensitive) or 'yesterday' (case-insensitive)
+
+The parser backtracked after:
+  Error in Ln: 1 Col: 8
+  toddday
+         ^
+  Note: The error occurred at the end of the input stream.
+  Expecting: any char in ‘ ’
+  Other error messages:
+    date not recognized
+]]></message>
+                        </reason>
+                      </test-case>
+                    </results>
+                  </test-suite>
+                  <test-suite type="ParameterizedTest" name="complex backward and forward day shifts should be parsed correctly" executed="True" result="Success" success="True" time="0.002" asserts="0">
+                    <results>
+                      <test-case name="Nadapa.Tests.BasicParsing.complex backward and forward day shifts should be parsed correctly(&quot;4 days before 3 days after yesterday&quot;)" executed="True" result="Success" success="True" time="0.001" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.complex backward and forward day shifts should be parsed correctly(&quot;3 days before 2 days after yesterday&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="ParameterizedTest" name="complex backward day shifts should be parsed correctly" executed="True" result="Success" success="True" time="0.001" asserts="0">
+                    <results>
+                      <test-case name="Nadapa.Tests.BasicParsing.complex backward day shifts should be parsed correctly(&quot;4 days before 1 days before yesterday&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.complex backward day shifts should be parsed correctly(&quot;3 days before 2 days before yesterday&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="ParameterizedTest" name="ISO date literals should be parsed correctly" executed="True" result="Success" success="True" time="0.004" asserts="0">
+                    <results>
+                      <test-case name="Nadapa.Tests.BasicParsing.ISO date literals should be parsed correctly(&quot;2012/03/06&quot;)" executed="True" result="Success" success="True" time="0.003" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.ISO date literals should be parsed correctly(&quot;2012-03-06&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="ParameterizedTest" name="simple backward day shifts should be parsed correctly" executed="True" result="Success" success="True" time="0.002" asserts="0">
+                    <results>
+                      <test-case name="Nadapa.Tests.BasicParsing.simple backward day shifts should be parsed correctly(&quot;4 days before tomorrow&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.simple backward day shifts should be parsed correctly(&quot;3 days before now&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="ParameterizedTest" name="simple backward week shifts should be parsed correctly" executed="True" result="Success" success="True" time="0.005" asserts="0">
+                    <results>
+                      <test-case name="Nadapa.Tests.BasicParsing.simple backward week shifts should be parsed correctly(&quot;4 week before 7 days after today&quot;)" executed="True" result="Success" success="True" time="0.003" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.simple backward week shifts should be parsed correctly(&quot;3 weeks before now&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="ParameterizedTest" name="simple forward day shifts should be parsed correctly" executed="True" result="Success" success="True" time="0.001" asserts="0">
+                    <results>
+                      <test-case name="Nadapa.Tests.BasicParsing.simple forward day shifts should be parsed correctly(&quot;2 days after today&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.simple forward day shifts should be parsed correctly(&quot;2 days from now&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="ParameterizedTest" name="simple forward month shifts should be parsed correctly" executed="True" result="Success" success="True" time="0.001" asserts="0">
+                    <results>
+                      <test-case name="Nadapa.Tests.BasicParsing.simple forward month shifts should be parsed correctly(&quot;2 month after today&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.simple forward month shifts should be parsed correctly(&quot;2 months from now&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="ParameterizedTest" name="simple forward week shifts should be parsed correctly" executed="True" result="Success" success="True" time="0.002" asserts="0">
+                    <results>
+                      <test-case name="Nadapa.Tests.BasicParsing.simple forward week shifts should be parsed correctly(&quot;2 week after today&quot;)" executed="True" result="Success" success="True" time="0.001" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.simple forward week shifts should be parsed correctly(&quot;2 weeks from now&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="ParameterizedTest" name="simple forward year shifts should be parsed correctly" executed="True" result="Success" success="True" time="0.001" asserts="0">
+                    <results>
+                      <test-case name="Nadapa.Tests.BasicParsing.simple forward year shifts should be parsed correctly(&quot;2 years after today&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.simple forward year shifts should be parsed correctly(&quot;2 year from now&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="ParameterizedTest" name="today should be parsed correctly" executed="True" result="Success" success="True" time="0.002" asserts="0">
+                    <results>
+                      <test-case name="Nadapa.Tests.BasicParsing.today should be parsed correctly(&quot;now&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.today should be parsed correctly(&quot;tdy&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.today should be parsed correctly(&quot;today&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="ParameterizedTest" name="tommorrow should be parsed correctly" executed="True" result="Success" success="True" time="0.003" asserts="0">
+                    <results>
+                      <test-case name="Nadapa.Tests.BasicParsing.tommorrow should be parsed correctly(&quot;tommorrow&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.tommorrow should be parsed correctly(&quot;tommorow&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.tommorrow should be parsed correctly(&quot;tomorow&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.tommorrow should be parsed correctly(&quot;tmr&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.tommorrow should be parsed correctly(&quot;tomorrow&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                    </results>
+                  </test-suite>
+                  <test-suite type="ParameterizedTest" name="yesterday should be parsed correctly" executed="True" result="Success" success="True" time="0.002" asserts="0">
+                    <results>
+                      <test-case name="Nadapa.Tests.BasicParsing.yesterday should be parsed correctly(&quot;yest&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.yesterday should be parsed correctly(&quot;ye&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                      <test-case name="Nadapa.Tests.BasicParsing.yesterday should be parsed correctly(&quot;yesterday&quot;)" executed="True" result="Success" success="True" time="0.000" asserts="1" />
+                    </results>
+                  </test-suite>
+                </results>
+              </test-suite>
+              <test-suite type="TestFixture" name="ComplexParsing" executed="True" result="Success" success="True" time="0.003" asserts="0">
+                <results>
+                  <test-case name="Nadapa.Tests.ComplexParsing.date at the end should be parsed correctly" executed="True" result="Success" success="True" time="0.002" asserts="1" />
+                </results>
+              </test-suite>
+            </results>
+          </test-suite>
+        </results>
+      </test-suite>
+    </results>
+  </test-suite>
+</test-results>
