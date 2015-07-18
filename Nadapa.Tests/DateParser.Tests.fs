@@ -120,4 +120,4 @@ type ComplexParsing() =
         let sut = DateParser()
         let expected = SuccessfulParse(DateTime(2012,3,6))
         let actual = sut.ParseAtEnd("blablab alb  alb asd aas 2012-03-06")
-        Assert.AreEqual(expected, actual)
+        Assert.AreEqual(expected, actual)  
