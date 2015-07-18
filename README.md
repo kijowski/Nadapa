@@ -14,4 +14,4 @@
 ## Usage
 
 ## Contributors
-* Michal Kijowski 
+* [Michal Kijowski](http://www.michalkijowski.pl) 
