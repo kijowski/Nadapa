@@ -9,11 +9,33 @@ type ParseResult =
     | SuccessfulParse of DateTime
     | FailedParse of string
 
+type ShiftType =
+    | DayBased of (int -> DateTransform)
+
+
 type AbsoluteShift =
     { 
-        ShiftInDays:int
+        Apply:int -> DateTransform
         Labels : string seq
     }
+   
+[<AutoOpen>]
+module Helpers = 
+    let addYear i (date:DateTime) = 
+        date.AddYears(i)
+    let addMonth i (date:DateTime) = 
+        date.AddMonths(i)
+    let addWeek i (date:DateTime) = 
+        date.AddDays(float i * 7.)
+    let addDay i (date:DateTime) =
+        date.AddDays(float i)
+    let nextOccurenceOf weekday (date:DateTime) = 
+        let rec noo (d:DateTime) = 
+            if d.DayOfWeek = weekday 
+            then d
+            else noo (addDay 1 d)
+        noo date
+               
 
 module ParserCreators = 
     let createParser dateTransform (names:string seq) =
@@ -21,6 +43,7 @@ module ParserCreators =
         |> Seq.sortBy(fun x -> - x.Length)
         |> Seq.map (fun name -> stringCIReturn name dateTransform  .>> spaces )
         |> choice
+
     let createConsumingParser (names:string seq) =
         names 
         |> Seq.sortBy(fun x -> - x.Length)
@@ -28,43 +51,39 @@ module ParserCreators =
         |> choice
 
 module InternalParsers = 
+    open ParserCreators
+
     let todayP = 
-        ParserCreators.createParser (id) ["today"; "tdy" ; "now"] 
+        createParser (id) ["today"; "tdy" ; "now"] 
     let tomorrowP = 
-        ParserCreators.createParser (fun (date:DateTime) -> date.AddDays(1.)) ["tomorow";"tomorrow";"tommorrow";"tommorow";"tmr"] 
+        createParser (addDay 1) ["tomorow";"tomorrow";"tommorrow";"tommorow";"tmr"] 
     let yesterdayP = 
-        ParserCreators.createParser (fun (date:DateTime) -> date.AddDays(-1.)) ["yesterday"; "yest" ; "ye"]     
+        createParser (addDay -1) ["yesterday"; "yest" ; "ye"]     
 
     let shiftP (shiftTypes:AbsoluteShift list) = 
-        pint32 
-        .>> spaces 
-        .>>. (shiftTypes |> List.map(fun shiftType -> (ParserCreators.createParser shiftType.ShiftInDays shiftType.Labels)) |> choice) 
-        |>> fun (shift, size) -> float(shift * size)
+        pint32 .>> spaces 
+        .>>. (shiftTypes |> List.map(fun shiftType -> (createParser shiftType.Apply shiftType.Labels)) |> choice) 
+
 
     let fromP (shiftType:AbsoluteShift list) parser= 
         attempt (
-            shiftP shiftType
-            .>> spaces 
-            .>> ParserCreators.createConsumingParser ["from"; "after"]
-            .>> spaces 
-            .>>. parser
-            |>> fun (shift, dateTransf) -> ((fun (date:DateTime) -> date.AddDays(shift)) >> dateTransf)
+            pipe2 
+                (shiftP shiftType .>> createConsumingParser ["from"; "after"])
+                parser
+                (fun (size, shift) dateTransf -> shift ((size)) >> dateTransf)
         )
     let beforeP (shiftType:AbsoluteShift list) parser = 
         attempt (
-            shiftP shiftType
-            .>> spaces 
-            .>> ParserCreators.createConsumingParser ["before"]
-            .>> spaces 
-            .>>. parser
-            |>> fun (shift, dateTransf) -> ((fun (date:DateTime) -> date.AddDays(-shift)) >> dateTransf)
+            pipe2
+                (shiftP shiftType .>> createConsumingParser ["before"])
+                parser
+                (fun (size, shift) dateTransf -> shift ((-size)) >> dateTransf)
         )
     let agoP (shiftType:AbsoluteShift list) = 
         attempt (
             shiftP shiftType
-            .>> spaces 
             .>>? ParserCreators.createConsumingParser ["ago"]
-            |>> fun (shift) -> ((fun (date:DateTime) -> date.AddDays(-shift)))
+            |>> fun (size, shift) -> shift ((-size))
         )
     let fallbackP =
         attempt (
@@ -84,10 +103,11 @@ type DateParser(?baseDate : DateTime) =
 
     let basicShifts = 
         [
-            {ShiftInDays = 1 ; Labels = ["days"; "day"]}
-            {ShiftInDays = 7 ; Labels = ["weeks"; "week"]}
-            {ShiftInDays = 14 ; Labels = ["fortnight" ; "fortnights"]}
-            {ShiftInDays = 72 ; Labels = ["kardashian"]}
+            {Labels = ["days"; "day"] ; Apply = addDay}
+            {Labels = ["weeks"; "week"] ; Apply = addWeek}
+            {Labels = ["fortnight" ; "fortnights"] ; Apply = (fun x -> addWeek (2*x))}
+            {Labels = ["months" ; "month"] ; Apply = addMonth}
+            {Labels = ["years" ; "year"] ; Apply = addYear}
         ]
 
     let combinedParser = 

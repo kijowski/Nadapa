@@ -1,8 +1,8 @@
-﻿namespace Kefir
+namespace Nadapa
 open System.Reflection
 open System.Runtime.CompilerServices
 
-[<assembly: AssemblyTitle("Kefir")>]
+[<assembly: AssemblyTitle("Nadapa")>]
 [<assembly: AssemblyDescription("")>]
 [<assembly: AssemblyConfiguration("")>]
 [<assembly: AssemblyCompany("")>]
