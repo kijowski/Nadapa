@@ -4,7 +4,7 @@ open NUnit.Framework
 open Nadapa
 
 [<TestFixture>]
-type Test() = 
+type BasicParsing() = 
     let anchorDate = DateTime(2015, 1,5)
 
     [<Test>]
@@ -45,6 +45,18 @@ type Test() =
         Assert.AreEqual(expected, sut.Parse("3 days before now"))
         Assert.AreEqual(expected, sut.Parse("4 days before tomorrow"))
     [<Test>]
+    member x.``simple forward week shifts should be parsed correctly``() =
+        let sut = DateParser(anchorDate)
+        let expected = SuccessfulParse(anchorDate.AddDays(14.))
+        Assert.AreEqual(expected, sut.Parse("2 weeks from now"))
+        Assert.AreEqual(expected, sut.Parse("2 week after today"))
+    [<Test>]
+    member x.``simple backward week shifts should be parsed correctly``() =
+        let sut = DateParser(anchorDate)
+        let expected = SuccessfulParse(anchorDate.AddDays(-21.))
+        Assert.AreEqual(expected, sut.Parse("3 weeks before now"))
+        Assert.AreEqual(expected, sut.Parse("4 week before 7 days after today"))
+    [<Test>]
     member x.``complex backward day shifts should be parsed correctly``() =
         let sut = DateParser(anchorDate)
         let expected = SuccessfulParse(anchorDate.AddDays(-6.))
@@ -66,3 +78,11 @@ type Test() =
         let actual = sut.Parse("2012-03-06")
         Assert.AreEqual(expected, actual)
 
+[<TestFixture>]
+type ComplexParsing() = 
+    [<Test>]
+    member x.``date at the end should be parsed correctly``() =
+        let sut = DateParser()
+        let expected = SuccessfulParse(DateTime(2012,3,6))
+        let actual = sut.ParseAtEnd("blablab alb  alb asd aas 2012-03-06")
+        Assert.AreEqual(expected, actual)

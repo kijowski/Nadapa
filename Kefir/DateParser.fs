@@ -16,12 +16,14 @@ type AbsoluteShift =
     }
 
 module ParserCreators = 
-    let createParser dateTransform names =
+    let createParser dateTransform (names:string seq) =
         names 
+        |> Seq.sortBy(fun x -> - x.Length)
         |> Seq.map (fun name -> stringCIReturn name dateTransform  .>> spaces )
         |> choice
-    let createConsumingParser names =
+    let createConsumingParser (names:string seq) =
         names 
+        |> Seq.sortBy(fun x -> - x.Length)
         |> Seq.map (fun name -> skipStringCI name  .>> spaces )
         |> choice
 
@@ -33,13 +35,13 @@ module InternalParsers =
     let yesterdayP = 
         ParserCreators.createParser (fun (date:DateTime) -> date.AddDays(-1.)) ["yesterday"; "yest" ; "ye"]     
 
-    let shiftP (shiftType:AbsoluteShift) = 
+    let shiftP (shiftTypes:AbsoluteShift list) = 
         pint32 
         .>> spaces 
-        .>> (ParserCreators.createConsumingParser shiftType.Labels) 
-        |>> fun shiftSize -> float(shiftSize * shiftType.ShiftInDays)
+        .>>. (shiftTypes |> List.map(fun shiftType -> (ParserCreators.createParser shiftType.ShiftInDays shiftType.Labels)) |> choice) 
+        |>> fun (shift, size) -> float(shift * size)
 
-    let fromP (shiftType:AbsoluteShift) parser= 
+    let fromP (shiftType:AbsoluteShift list) parser= 
         attempt (
             shiftP shiftType
             .>> spaces 
@@ -48,7 +50,7 @@ module InternalParsers =
             .>>. parser
             |>> fun (shift, dateTransf) -> ((fun (date:DateTime) -> date.AddDays(shift)) >> dateTransf)
         )
-    let beforeP (shiftType:AbsoluteShift) parser = 
+    let beforeP (shiftType:AbsoluteShift list) parser = 
         attempt (
             shiftP shiftType
             .>> spaces 
@@ -57,7 +59,7 @@ module InternalParsers =
             .>>. parser
             |>> fun (shift, dateTransf) -> ((fun (date:DateTime) -> date.AddDays(-shift)) >> dateTransf)
         )
-    let agoP (shiftType:AbsoluteShift) = 
+    let agoP (shiftType:AbsoluteShift list) = 
         attempt (
             shiftP shiftType
             .>> spaces 
@@ -80,17 +82,23 @@ module InternalParsers =
 type DateParser(?baseDate : DateTime) = 
     let bDate = defaultArg baseDate DateTime.Now  
 
+    let basicShifts = 
+        [
+            {ShiftInDays = 1 ; Labels = ["days"; "day"]}
+            {ShiftInDays = 7 ; Labels = ["weeks"; "week"]}
+            {ShiftInDays = 14 ; Labels = ["fortnight" ; "fortnights"]}
+            {ShiftInDays = 72 ; Labels = ["kardashian"]}
+        ]
 
     let combinedParser = 
-        let pars, refPar = createParserForwardedToRef()      
-
+        let pars, refPar = createParserForwardedToRef()     
         refPar := choice [
             InternalParsers.todayP 
             InternalParsers.tomorrowP
             InternalParsers.yesterdayP
-            InternalParsers.agoP {ShiftInDays = 1 ; Labels = ["days"; "day"]}
-            InternalParsers.fromP {ShiftInDays = 1 ; Labels = ["days"; "day"]} pars
-            InternalParsers.beforeP {ShiftInDays = 1 ; Labels = ["days"; "day"]} pars
+            InternalParsers.agoP basicShifts
+            InternalParsers.fromP basicShifts pars
+            InternalParsers.beforeP basicShifts pars
             InternalParsers.fallbackP
         ]
         pars
@@ -101,5 +109,9 @@ type DateParser(?baseDate : DateTime) =
             | Success (result, _, __) -> SuccessfulParse(result bDate)
             | Failure(x,y,z) -> FailedParse(x)
 
+    member this.ParseAtEnd(arg:string) =
+        match run ( manyCharsTillApply anyChar combinedParser (fun x y -> y) .>> eof) arg with
+            | Success (result, _, __) -> SuccessfulParse(result bDate)
+            | Failure(x,y,z) -> FailedParse(x)
             
 
