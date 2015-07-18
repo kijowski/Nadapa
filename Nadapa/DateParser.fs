@@ -11,12 +11,26 @@ type ParseResult =
 
 type ShiftType =
     | DayBased of (int -> DateTransform)
-
+    | Manual of DateTransform
 
 type AbsoluteShift =
     { 
         Apply:int -> DateTransform
         Labels : string seq
+    }
+
+type ParserConfig = 
+    {
+        Yesterday : string list
+        Today: string list
+        Tomorrow : string list
+        Day : string list
+        Week : string list
+        Fortnight : string list
+        Month : string list
+        Year : string list
+        BackShiftKeywords : string list
+        ForwardShiftKeywords : string list
     }
    
 [<AutoOpen>]
@@ -53,38 +67,41 @@ module ParserCreators =
 module InternalParsers = 
     open ParserCreators
 
-    let todayP = 
-        createParser (id) ["today"; "tdy" ; "now"] 
-    let tomorrowP = 
-        createParser (addDay 1) ["tomorow";"tomorrow";"tommorrow";"tommorow";"tmr"] 
-    let yesterdayP = 
-        createParser (addDay -1) ["yesterday"; "yest" ; "ye"]     
+    let todayP labels = 
+        createParser (id) labels
+    let tomorrowP labels = 
+        createParser (addDay 1) labels
+    let yesterdayP labels = 
+        createParser (addDay -1) labels    
 
     let shiftP (shiftTypes:AbsoluteShift list) = 
         pint32 .>> spaces 
         .>>. (shiftTypes |> List.map(fun shiftType -> (createParser shiftType.Apply shiftType.Labels)) |> choice) 
 
 
-    let fromP (shiftType:AbsoluteShift list) parser= 
+    let forwardShiftP labels (shiftTypes:AbsoluteShift list) parser= 
         attempt (
             pipe2 
-                (shiftP shiftType .>> createConsumingParser ["from"; "after"])
+                (shiftP shiftTypes .>> createConsumingParser labels)
                 parser
                 (fun (size, shift) dateTransf -> shift ((size)) >> dateTransf)
         )
-    let beforeP (shiftType:AbsoluteShift list) parser = 
+
+    let backShiftP labels (shiftTypes:AbsoluteShift list) parser = 
         attempt (
             pipe2
-                (shiftP shiftType .>> createConsumingParser ["before"])
+                (shiftP shiftTypes .>> createConsumingParser labels)
                 parser
                 (fun (size, shift) dateTransf -> shift ((-size)) >> dateTransf)
         )
-    let agoP (shiftType:AbsoluteShift list) = 
+
+    let agoP (shiftTypes:AbsoluteShift list) = 
         attempt (
-            shiftP shiftType
-            .>>? ParserCreators.createConsumingParser ["ago"]
+            shiftP shiftTypes
+            .>> ParserCreators.createConsumingParser ["ago"]
             |>> fun (size, shift) -> shift ((-size))
         )
+
     let fallbackP =
         attempt (
             many1CharsTill
@@ -98,38 +115,54 @@ module InternalParsers =
                         | (false,_) -> fail "date not recognized")
         )    
 
-type DateParser(?baseDate : DateTime) = 
-    let bDate = defaultArg baseDate DateTime.Now  
+type DateParser(?config:ParserConfig) = 
+    let conf = 
+        defaultArg 
+            config 
+            {
+                Yesterday = ["yesterday"; "yest" ; "ye"] 
+                Today = ["today"; "tdy" ; "now"] 
+                Tomorrow = ["tomorow";"tomorrow";"tommorrow";"tommorow";"tmr"] 
+                Day = ["days"; "day"]
+                Week = ["weeks"; "week"] 
+                Fortnight = ["fortnight" ; "fortnights"]
+                Month = ["months" ; "month"]
+                Year = ["years" ; "year"]
+                BackShiftKeywords = ["before"]
+                ForwardShiftKeywords = ["from"; "after"]
+            }
 
     let basicShifts = 
         [
-            {Labels = ["days"; "day"] ; Apply = addDay}
-            {Labels = ["weeks"; "week"] ; Apply = addWeek}
-            {Labels = ["fortnight" ; "fortnights"] ; Apply = (fun x -> addWeek (2*x))}
-            {Labels = ["months" ; "month"] ; Apply = addMonth}
-            {Labels = ["years" ; "year"] ; Apply = addYear}
+            {Labels = conf.Day ; Apply = addDay}
+            {Labels = conf.Week ; Apply = addWeek}
+            {Labels = conf.Fortnight ; Apply = (fun x -> addWeek (2*x))}
+            {Labels = conf.Month ; Apply = addMonth}
+            {Labels = conf.Year ; Apply = addYear}
         ]
 
     let combinedParser = 
         let pars, refPar = createParserForwardedToRef()     
         refPar := choice [
-            InternalParsers.todayP 
-            InternalParsers.tomorrowP
-            InternalParsers.yesterdayP
+            InternalParsers.todayP conf.Today
+            InternalParsers.tomorrowP conf.Tomorrow
+            InternalParsers.yesterdayP conf.Yesterday
             InternalParsers.agoP basicShifts
-            InternalParsers.fromP basicShifts pars
-            InternalParsers.beforeP basicShifts pars
+            InternalParsers.forwardShiftP conf.ForwardShiftKeywords basicShifts pars
+            InternalParsers.backShiftP conf.BackShiftKeywords basicShifts pars
             InternalParsers.fallbackP
         ]
         pars
     
          
-    member this.Parse(arg:string) =
-        match run (combinedParser) arg with
+    member this.Parse(arg:string, ?baseDate : DateTime) =
+        let bDate = defaultArg baseDate DateTime.Now  
+        match run (spaces >>. combinedParser .>> eof) arg with
             | Success (result, _, __) -> SuccessfulParse(result bDate)
             | Failure(x,y,z) -> FailedParse(x)
 
-    member this.ParseAtEnd(arg:string) =
+    member this.ParseAtEnd(arg:string, ?baseDate : DateTime) =
+        let bDate = defaultArg baseDate DateTime.Now  
         match run ( manyCharsTillApply anyChar combinedParser (fun x y -> y) .>> eof) arg with
             | Success (result, _, __) -> SuccessfulParse(result bDate)
             | Failure(x,y,z) -> FailedParse(x)
