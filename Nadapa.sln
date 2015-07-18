@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Nadapa.Tests", "Nadapa.Tests\Nadapa.Tests.fsproj", "{2C9E6ED0-9509-4285-A41A-876CC52E7E74}"
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Nadapa.Tests", "tests\Nadapa.Tests\Nadapa.Tests.fsproj", "{2C9E6ED0-9509-4285-A41A-876CC52E7E74}"
 EndProject
-Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Nadapa", "Nadapa\Nadapa.fsproj", "{15AFC65E-5033-4AEF-8F9D-8542E8EA03B8}"
+Project("{f2a71f9b-5d33-465a-a702-920d77279786}") = "Nadapa", "src\Nadapa\Nadapa.fsproj", "{15AFC65E-5033-4AEF-8F9D-8542E8EA03B8}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{06876B79-0278-42DC-9582-33FF1AB5E56A}"
 	ProjectSection(SolutionItems) = preProject
