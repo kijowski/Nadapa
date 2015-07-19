@@ -13,6 +13,12 @@ type ShiftType =
     | DayBased of (int -> DateTransform)
     | Manual of DateTransform
 
+type RelativeShift =
+  {
+    Labels : string seq
+    Apply:DateTransform
+  }
+
 type AbsoluteShift =
     {
         Apply:int -> DateTransform
@@ -48,7 +54,12 @@ module Helpers =
             if d.DayOfWeek = weekday
             then d
             else noo (addDay 1 d)
-        noo date
+        noo (addDay 1 date)
+    let nextWeekday (date:DateTime) =
+      match date.DayOfWeek with
+        | DayOfWeek.Friday -> addDay 3 date
+        | DayOfWeek.Saturday -> addDay 2 date
+        | _ -> addDay 1 date
 
 
 module ParserCreators =
@@ -102,6 +113,11 @@ module InternalParsers =
             |>> fun (size, shift) -> shift ((-size))
         )
 
+    let nextP (shifts:RelativeShift list)=
+      attempt (
+        skipStringCI "next" .>> spaces  >>. (shifts |> List.map(fun shift -> createParser shift.Apply shift.Labels) |> choice)
+        )
+
     let fallbackP =
         attempt (
             many1CharsTill
@@ -141,6 +157,17 @@ type DateParser(?config:ParserConfig) =
             {Labels = conf.Year ; Apply = addYear}
         ]
 
+    let relativeShifts =
+      [
+        {RelativeShift.Labels = ["Monday"; "mon"] ; Apply = nextOccurenceOf DayOfWeek.Monday}
+        {RelativeShift.Labels = ["Tuesday" ; "tue"] ; Apply = nextOccurenceOf DayOfWeek.Tuesday}
+        {RelativeShift.Labels = ["Wednesday" ; "wed"] ; Apply = nextOccurenceOf DayOfWeek.Wednesday}
+        {RelativeShift.Labels = ["Thursday" ; "thu"] ; Apply = nextOccurenceOf DayOfWeek.Thursday}
+        {RelativeShift.Labels = ["Friday" ; "fri"] ; Apply = nextOccurenceOf DayOfWeek.Friday}
+        {RelativeShift.Labels = ["Saturday" ; "sat"] ; Apply = nextOccurenceOf DayOfWeek.Saturday}
+        {RelativeShift.Labels = ["Sunday"; "sun"] ; Apply = nextOccurenceOf DayOfWeek.Sunday}
+      ]
+
     let combinedParser =
         let pars, refPar = createParserForwardedToRef()
         refPar := choice [
@@ -150,6 +177,7 @@ type DateParser(?config:ParserConfig) =
             InternalParsers.agoP basicShifts
             InternalParsers.forwardShiftP conf.ForwardShiftKeywords basicShifts pars
             InternalParsers.backShiftP conf.BackShiftKeywords basicShifts pars
+            InternalParsers.nextP relativeShifts
             InternalParsers.fallbackP
         ]
         pars
