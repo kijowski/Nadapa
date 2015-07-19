@@ -3,11 +3,15 @@
 # Nadapa
 > Sweet and simple micro-library for human readable dates parsing.
 
-## Table of contents
-* [How to install](#how-to-install)
-* [Usage](#how-to-use)
-* [Documentation](#documentation)
-* [Maintainer](#maintainer)
+### Table of contents
+* [Synopsis](#synopsis)
+* [Installation](#installation)
+* [Usage](#usage)
+* [API Reference](#api-reference)
+* [Authors](#authors)
+* [License](#license)
+
+## Synopsis
 
 ## Installation
 To install Nadapa using Nuget, run the following command in the Package Manager Console:
@@ -31,10 +35,13 @@ let result = parser.Parse("2 days from now")
 let result = parser.Parse("yesterday", System.DateTime(1984, 1, 5))
 ```
 
-## Documentation
+## API Reference
 Work in progress...
 
 Will be finished once library API stabilize.
 
-## Maintainer
+## Authors
 * [Michal Kijowski](http://www.michalkijowski.pl)
+
+## License
+[The MIT License (MIT)](LICENSE.txt)

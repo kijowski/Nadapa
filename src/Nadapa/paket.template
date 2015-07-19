@@ -18,4 +18,4 @@ tags
 summary
     Sweet and simple micro-library for human readable dates parsing.
 description
-    Sweet and simple micro-library for human readable dates parsing.
+    Nadapa is a small utility library that can be used for extracting DateTime objects from natural language text.
