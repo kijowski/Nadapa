@@ -1,0 +1,21 @@
+type project
+owners
+    Michał Kijowski
+authors
+    Michał Kijowski
+projectUrl
+    http://github.com/kijowski/Nadapa
+iconUrl
+    https://raw.githubusercontent.com/kijowski/Nadapa/master/docs/files/img/logo.png
+licenseUrl
+    http://github.com/kijowski/Nadapa/blob/master/LICENSE.txt
+requireLicenseAcceptance
+    false
+copyright
+    Copyright 2015
+tags
+    fparsec date parser
+summary
+    Sweet and simple micro-library for human readable dates parsing.
+description
+    Sweet and simple micro-library for human readable dates parsing.
