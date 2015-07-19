@@ -18,7 +18,7 @@ To install Nadapa using Nuget, run the following command in the Package Manager 
 ```
 PM> Install-Package Nadapa -Pre
 ```
-Alternatively you can use following Paket command:
+Alternatively you can use the following Paket command:
 ```
 $ paket add nuget Nadapa
 ```
@@ -41,7 +41,7 @@ Work in progress...
 Will be finished once library API stabilize.
 
 ## Authors
-* [Michal Kijowski](http://www.michalkijowski.pl)
+* [Michal Kijowski](michal.kijowski@hotmail.com)
 
 ## License
 [The MIT License (MIT)](LICENSE.txt)
