@@ -1,7 +1,7 @@
 ![Nadapa](https://lh3.googleusercontent.com/CyGGnsOjYmE05xJWGtYOuFBdq45ytWSXx9NRpfOjeVs=w859-h282-no)
 
 # Nadapa
-> Sweet and simple micro-library for human readable dates parsing.
+> Simple micro-library for human readable dates parsing.
 
 ### Table of contents
 * [Synopsis](#synopsis)
@@ -12,7 +12,9 @@
 * [License](#license)
 
 ## Synopsis
+Nadapa is a small utility library that can be used for extracting DateTime objects from natural language text.
 
+It is written in F# with the use of [FParsec](http://www.quanttec.com/fparsec/) parser combinator library.
 ## Installation
 To install Nadapa using Nuget, run the following command in the Package Manager Console:
 ```
