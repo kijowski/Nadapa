@@ -15,8 +15,8 @@ type ShiftType =
 
 type RelativeShift =
   {
+    Apply : DateTransform
     Labels : string seq
-    Apply:DateTransform
   }
 
 type AbsoluteShift =
@@ -55,11 +55,13 @@ module Helpers =
       then d
       else noo (addDay 1 d)
     noo (addDay 1 date)
-  let nextWeekday (date:DateTime) =
+  let nextWorkingDay (date:DateTime) =
     match date.DayOfWeek with
       | DayOfWeek.Friday -> addDay 3 date
       | DayOfWeek.Saturday -> addDay 2 date
       | _ -> addDay 1 date
+  let nextWeekend (date:DateTime) =
+    nextOccurenceOf DayOfWeek.Saturday
 
 module ParserCreators =
   let createParser dateTransform (names:string seq) =
