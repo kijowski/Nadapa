@@ -139,6 +139,20 @@ type BasicParsing() =
         Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
 
     [<Test>]
+    [<TestCase("next saturday")>]
+    [<TestCase("next sat")>]
+    member x.``next saturday on monday parse OK``(input : string) =
+        let expected = SuccessfulParse(DateTime(2015,1,10))
+        Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
+
+    [<Test>]
+    [<TestCase("next sunday")>]
+    [<TestCase("next sun")>]
+    member x.``next sunday on monday parse OK``(input : string) =
+        let expected = SuccessfulParse(DateTime(2015,1,11))
+        Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
+
+    [<Test>]
     [<TestCase("toddday")>]
     [<TestCase("tmrm")>]
     [<TestCase("random input")>]
