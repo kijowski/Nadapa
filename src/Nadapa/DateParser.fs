@@ -121,7 +121,11 @@ module InternalParsers =
 
   let nextP (shifts:RelativeShift list)=
     attempt (
-      skipStringCI "next" .>> spaces  >>. (shifts |> List.map(fun shift -> createParser shift.Apply shift.Labels) |> choice)
+      skipStringCI "next" .>> spaces
+      >>. (shifts
+        |> List.collect(fun shift -> shift.Labels |> Seq.map(fun lab -> lab, shift.Apply) |> Seq.toList)
+        |> List.sortBy(fun (lab,shift) -> - lab.Length)
+        |> List.map(fun (lab,shift) -> createParser shift [lab]) |> choice)
     )
 
   let fallbackP =
@@ -172,12 +176,12 @@ type DateParser(?config:ParserConfig) =
 
   let relativeShifts =
     [
-      {RelativeShift.Labels = ["Monday"; "mon"] ; Apply = nextOccurenceOf DayOfWeek.Monday}
+      {RelativeShift.Labels = ["Monday"; "mon" ; "week"] ; Apply = nextOccurenceOf DayOfWeek.Monday}
       {RelativeShift.Labels = ["Tuesday" ; "tue"] ; Apply = nextOccurenceOf DayOfWeek.Tuesday}
       {RelativeShift.Labels = ["Wednesday" ; "wed"] ; Apply = nextOccurenceOf DayOfWeek.Wednesday}
       {RelativeShift.Labels = ["Thursday" ; "thu"] ; Apply = nextOccurenceOf DayOfWeek.Thursday}
       {RelativeShift.Labels = ["Friday" ; "fri"] ; Apply = nextOccurenceOf DayOfWeek.Friday}
-      {RelativeShift.Labels = ["Saturday" ; "sat"] ; Apply = nextOccurenceOf DayOfWeek.Saturday}
+      {RelativeShift.Labels = ["Saturday" ; "sat" ; "weekend"] ; Apply = nextOccurenceOf DayOfWeek.Saturday}
       {RelativeShift.Labels = ["Sunday"; "sun"] ; Apply = nextOccurenceOf DayOfWeek.Sunday}
     ]
 
