@@ -9,6 +9,13 @@ type ParseResult =
   | SuccessfulParse of DateTime
   | FailedParse of string
 
+type StaticShifts =
+  {
+    Labels : string seq
+    StaticApply : DateTransform
+    Priority : int
+  }
+
 type ShiftType =
   | DayBased of (int -> DateTransform)
   | Manual of DateTransform
@@ -79,12 +86,11 @@ module ParserCreators =
 module InternalParsers =
   open ParserCreators
 
-  let todayP labels =
-    createParser (id) labels
-  let tomorrowP labels =
-    createParser (addDay 1) labels
-  let yesterdayP labels =
-    createParser (addDay -1) labels
+  let relativeAnchorP (staticShifts : StaticShifts list) =
+    staticShifts
+    |> List.sortBy(fun shift -> shift.Priority)
+    |> List.map(fun shift -> createParser shift.StaticApply shift.Labels)
+    |> choice
 
   let shiftP (shiftTypes:AbsoluteShift list) =
     pint32 .>> spaces
@@ -148,6 +154,13 @@ type DateParser(?config:ParserConfig) =
           ForwardShiftKeywords = ["from"; "after"]
       }
 
+  let staticShifts =
+    [
+      {StaticApply = id ; Labels = conf.Today; Priority = 1}
+      {StaticApply = addDay 1 ; Labels = conf.Tomorrow; Priority = 2}
+      {StaticApply = addDay -1 ; Labels = conf.Yesterday; Priority = 3}
+    ]
+
   let basicShifts =
     [
       {Labels = conf.Day ; Apply = addDay}
@@ -171,9 +184,7 @@ type DateParser(?config:ParserConfig) =
   let combinedParser =
     let pars, refPar = createParserForwardedToRef()
     refPar := choice [
-      InternalParsers.todayP conf.Today
-      InternalParsers.tomorrowP conf.Tomorrow
-      InternalParsers.yesterdayP conf.Yesterday
+      InternalParsers.relativeAnchorP staticShifts
       InternalParsers.agoP basicShifts
       InternalParsers.forwardShiftP conf.ForwardShiftKeywords basicShifts pars
       InternalParsers.backShiftP conf.BackShiftKeywords basicShifts pars
@@ -186,11 +197,11 @@ type DateParser(?config:ParserConfig) =
   member this.Parse(arg:string, ?baseDate : DateTime) =
     let bDate = defaultArg baseDate DateTime.Now
     match run (spaces >>. combinedParser .>> eof) arg with
-      | Success (result, _, __) -> SuccessfulParse(result bDate)
+      | Success (result, _, _) -> SuccessfulParse(result bDate)
       | Failure(x,y,z) -> FailedParse(x)
 
   member this.ParseAtEnd(arg:string, ?baseDate : DateTime) =
     let bDate = defaultArg baseDate DateTime.Now
     match run ( manyCharsTillApply anyChar combinedParser (fun x y -> y) .>> eof) arg with
-      | Success (result, _, __) -> SuccessfulParse(result bDate)
+      | Success (result, _, _) -> SuccessfulParse(result bDate)
       | Failure(x,y,z) -> FailedParse(x)
