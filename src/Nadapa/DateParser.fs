@@ -69,6 +69,10 @@ module Helpers =
       | _ -> addDay 1 date
   let nextWeekend (date:DateTime) =
     nextOccurenceOf DayOfWeek.Saturday
+  let nextMonth (date:DateTime) =
+    DateTime(date.Year, (date.Month + 1 % 12), 1)
+  let nextYear (date:DateTime) =
+    DateTime(date.Year+1, 1, 1)
 
 module ParserCreators =
   let createParser dateTransform (names:string seq) =
@@ -183,6 +187,8 @@ type DateParser(?config:ParserConfig) =
       {RelativeShift.Labels = ["Friday" ; "fri"] ; Apply = nextOccurenceOf DayOfWeek.Friday}
       {RelativeShift.Labels = ["Saturday" ; "sat" ; "weekend"] ; Apply = nextOccurenceOf DayOfWeek.Saturday}
       {RelativeShift.Labels = ["Sunday"; "sun"] ; Apply = nextOccurenceOf DayOfWeek.Sunday}
+      {RelativeShift.Labels = ["month"] ; Apply = nextMonth}
+      {RelativeShift.Labels = ["year"] ; Apply = nextYear}
     ]
 
   let combinedParser =

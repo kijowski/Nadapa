@@ -56,6 +56,13 @@ type BasicParsing() =
         Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
 
     [<Test>]
+    [<TestCase("1 fortnight from now")>]
+    [<TestCase("1 fortnights after today")>]
+    member x.``simple forward fortnight shifts parse OK``(input : string) =
+        let expected = SuccessfulParse(baseTestDate.AddDays(14.))
+        Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
+
+    [<Test>]
     [<TestCase("2 months from now")>]
     [<TestCase("2 month after today")>]
     member x.``simple forward month shifts parse OK``(input : string) =
@@ -162,6 +169,18 @@ type BasicParsing() =
     [<TestCase("next weekend")>]
     member x.``next weekend parse ok``(input : string) =
       let expected = SuccessfulParse(DateTime(2015,1,10))
+      Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
+
+    [<Test>]
+    [<TestCase("next month")>]
+    member x.``next month parse ok``(input : string) =
+      let expected = SuccessfulParse(DateTime(2015,2,1))
+      Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
+
+    [<Test>]
+    [<TestCase("next year")>]
+    member x.``next year parse ok``(input : string) =
+      let expected = SuccessfulParse(DateTime(2016,1,1))
       Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
 
 
