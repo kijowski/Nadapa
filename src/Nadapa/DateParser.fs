@@ -1,7 +1,27 @@
 ﻿namespace Nadapa
 open System
 open FParsec
+open DateUtils
 
+module Config =
+  type DateParts =
+    {
+      Day : string seq
+      Week : string seq
+      Month : string seq
+      Year : string seq
+    }
+
+  type WeekDays =
+    {
+      Monday : string seq
+      Tuesday : string seq
+      Wednesday : string seq
+      Thursday : string seq
+      Friday : string seq
+      Saturday : string seq
+      Sunday : string seq
+    }
 
 type DateTransform = DateTime -> DateTime
 
@@ -16,10 +36,6 @@ type StaticShifts =
     Priority : int
   }
 
-type ShiftType =
-  | DayBased of (int -> DateTransform)
-  | Manual of DateTransform
-
 type RelativeShift =
   {
     Apply : DateTransform
@@ -31,6 +47,106 @@ type AbsoluteShift =
     Apply:int -> DateTransform
     Labels : string seq
   }
+
+// New
+module Types =
+  // Declaration of independence - special dates, valid only on it's own
+  // Today, tomorrow, yesterday - special cases, valid only on it's own
+  // Monday, Tuesday, ... - valid on it's own and with some shifts (next, last, previous)
+  // Day, week, month - valid only with shifts of all kinds (next, last, 2, 5)
+
+  type SpecificDate =
+    | Today
+    | Tomorrow
+    | Yesterday
+    | Specific of DateTime
+
+  type RelativeOffset =
+    | Next
+    | Previous
+
+  type Weekdays =
+    | Monday
+    | Tuesday
+    | Wednesday
+    | Thursday
+    | Friday
+    | Saturday
+    | Sunday
+
+  type DateParts =
+    | Day
+    | Week
+    | Month
+    | Year
+
+  type Shift =
+    | Date of SpecificDate
+    | Weekday of Weekdays
+    | RelativeDay of RelativeOffset * Weekdays
+    | RelativeShift of RelativeOffset * DateParts * Shift
+    | AbsoluteForwardShift of int * DateParts * Shift
+    | AbsoluteBackwardShift of int * DateParts * Shift
+    | Ago of int * DateParts
+
+module NewParsers =
+  open Types
+  let relativeDateP : Parser<SpecificDate,unit> =
+    choice [
+      stringCIReturn "today" Today
+      stringCIReturn "tomorrow" Tomorrow
+      stringCIReturn "yesterday" Yesterday
+    ] .>> spaces
+
+  let relativeOffsetP : Parser<RelativeOffset,unit> =
+    choice [
+      stringCIReturn "next" Next
+      stringCIReturn "previous" Previous
+    ] .>> spaces
+
+  let weekdaysP : Parser<Weekdays,unit> =
+    choice [
+      stringCIReturn "Monday" Monday
+      stringCIReturn "Tuesday" Tuesday
+      stringCIReturn "Wednesday" Wednesday
+      stringCIReturn "Thursday" Thursday
+      stringCIReturn "Friday" Friday
+      stringCIReturn "Saturday" Saturday
+      stringCIReturn "Sunday" Sunday
+    ]
+
+  let datePartsP : Parser<DateParts, unit> =
+    choice [
+      stringCIReturn "Day" Day
+      stringCIReturn "Week" Week
+      stringCIReturn "Month" Month
+      stringCIReturn "Year" Year
+    ]
+
+  let completeP : Parser<Shift,unit> =
+    let pars, refPar = createParserForwardedToRef()
+    refPar :=
+      choice [
+        relativeDateP |>> Date
+        weekdaysP |>> Weekday
+        relativeOffsetP .>>. weekdaysP |>> RelativeDay
+        relativeOffsetP .>>. datePartsP .>>. pars |>> fun ((x,y),z) -> RelativeShift(x,y,z)
+        (pint32 .>> spaces .>>. datePartsP .>> skipStringCI "after" .>>. pars) |>> fun ((x,y),z) -> AbsoluteForwardShift(x,y,z)
+        (pint32 .>> spaces .>>. datePartsP .>> skipStringCI "before" .>>. pars) |>> fun ((x,y),z) -> AbsoluteBackwardShift(x,y,z)
+        (pint32 .>> spaces .>>. datePartsP .>> skipStringCI "ago") |>> Ago
+      ]
+    pars
+    //let combinedParser =
+    //  let pars, refPar = createParserForwardedToRef()
+    //  refPar := choice [
+    //    InternalParsers.relativeAnchorP staticShifts
+    //    InternalParsers.agoP basicShifts
+    //    InternalParsers.forwardShiftP conf.ForwardShiftKeywords basicShifts pars
+    //    InternalParsers.backShiftP conf.BackShiftKeywords basicShifts pars
+    //    InternalParsers.nextP relativeShifts
+    //    InternalParsers.fallbackP
+    //    ]
+    //  pars
 
 type ParserConfig =
   {
@@ -46,49 +162,49 @@ type ParserConfig =
     ForwardShiftKeywords : string list
   }
 
-[<AutoOpen>]
-module Helpers =
-  let addYear i (date:DateTime) =
-    date.AddYears(i)
-  let addMonth i (date:DateTime) =
-    date.AddMonths(i)
-  let addWeek i (date:DateTime) =
-    date.AddDays(float i * 7.)
-  let addDay i (date:DateTime) =
-    date.AddDays(float i)
-  let nextOccurenceOf weekday (date:DateTime) =
-    let rec noo (d:DateTime) =
-      if d.DayOfWeek = weekday
-      then d
-      else noo (addDay 1 d)
-    noo (addDay 1 date)
-  let nextWorkingDay (date:DateTime) =
-    match date.DayOfWeek with
-      | DayOfWeek.Friday -> addDay 3 date
-      | DayOfWeek.Saturday -> addDay 2 date
-      | _ -> addDay 1 date
-  let nextWeekend (date:DateTime) =
-    nextOccurenceOf DayOfWeek.Saturday
-  let nextMonth (date:DateTime) =
-    DateTime(date.Year, (date.Month + 1 % 12), 1)
-  let nextYear (date:DateTime) =
-    DateTime(date.Year+1, 1, 1)
-
-module ParserCreators =
-  let createParser dateTransform (names:string seq) =
-    names
-    |> Seq.sortBy(fun x -> - x.Length)
-    |> Seq.map (fun name -> stringCIReturn name dateTransform  .>> spaces )
-    |> choice
-
-  let createConsumingParser (names:string seq) =
-    names
-    |> Seq.sortBy(fun x -> - x.Length)
-    |> Seq.map (fun name -> skipStringCI name  .>> spaces )
-    |> choice
+// next Monday, first Monday = Date -> Date
+// next Monday before = Date -> Date - does it make sense? NO
+// next Monday after = Date -> Date
+// 2 days before = Date -> Date
+// previous Monday after = don't make much sense
+// last Monday, previous Monday = Date -> Date
+// previous Monday before =  Date -> Date
+// Monday = next Monday
 
 module InternalParsers =
-  open ParserCreators
+
+  //let shiftTypeP =
+  //  choice [
+  //    stringCIReturn "next" Next
+  //    stringCIReturn "previous" Previous
+  //    pint32 |>> fun size -> Countable size
+  //    preturn Next
+  //  ] .>> spaces
+  //
+  //let shift2P (shift:Shift) =
+  //  createParser shift.Apply shift.Labels
+  //
+  //let shiftsP (shifts:Shift seq) =
+  //  shifts |> Seq.map shift2P |> choice
+  //
+  //let combP (shifts:Shift seq) =
+  //  pipe2
+  //    (shiftTypeP)
+  //    (shiftsP shifts)
+  //    (|>)
+  //
+  //let directionP =
+  //  choice[
+  //    anyLabel ["from"] >>% Forward
+  //    anyLabel ["before"] >>% Backward
+  //  ]
+  //
+  //let comb2P (shifts:Shift seq) =
+  //  pipe2
+  //    (combP shifts)
+  //    directionP
+  //    (<|)
+
 
   let relativeAnchorP (staticShifts : StaticShifts list) =
     staticShifts
@@ -103,7 +219,7 @@ module InternalParsers =
   let forwardShiftP labels (shiftTypes:AbsoluteShift list) parser=
     attempt (
       pipe2
-        (shiftP shiftTypes .>> createConsumingParser labels)
+        (shiftP shiftTypes .>> anyLabel labels)
         parser
         (fun (size, shift) dateTransf -> shift ((size)) >> dateTransf)
     )
@@ -111,7 +227,7 @@ module InternalParsers =
   let backShiftP labels (shiftTypes:AbsoluteShift list) parser =
     attempt (
       pipe2
-        (shiftP shiftTypes .>> createConsumingParser labels)
+        (shiftP shiftTypes .>> anyLabel labels)
         parser
         (fun (size, shift) dateTransf -> shift ((-size)) >> dateTransf)
     )
@@ -119,7 +235,7 @@ module InternalParsers =
   let agoP (shiftTypes:AbsoluteShift list) =
     attempt (
       shiftP shiftTypes
-      .>> ParserCreators.createConsumingParser ["ago"]
+      .>> anyLabel ["ago"]
       |>> fun (size, shift) -> shift ((-size))
     )
 

@@ -5,6 +5,7 @@
 #r @"FParsecCS.dll"
 #r @"FParsec.dll"
 //
+#load "DateUtils.fs"
 #load "DateParser.fs"
 open Nadapa
 let sut = DateParser()
