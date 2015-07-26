@@ -17,11 +17,26 @@ module DateUtils =
       then d
       else noo (addDay 1 d)
     noo (addDay 1 date)
+  let previousOccurenceOf weekday (date:DateTime) =
+    let rec noo (d:DateTime) =
+      if d.DayOfWeek = weekday
+      then d
+      else noo (addDay -1 d)
+    noo (addDay -1 date)
   let nextWeekend (date:DateTime) =
     nextOccurenceOf DayOfWeek.Saturday
   let nextMonth (date:DateTime) =
     DateTime(date.Year, (date.Month + 1 % 12), 1)
   let nextYear (date:DateTime) =
     DateTime(date.Year+1, 1, 1)
+  let lastWeek (date:DateTime) =
+    previousOccurenceOf DayOfWeek.Monday (previousOccurenceOf DayOfWeek.Monday (addDay 1 date))
+  let lastWeekend (date:DateTime) =
+    previousOccurenceOf DayOfWeek.Saturday
+  let lastMonth (date:DateTime) =
+    let temp = addMonth -1 date
+    DateTime(temp.Year, temp.Month, 1)
+  let lastYear (date:DateTime) =
+    DateTime(date.Year-1, 1, 1)
   let specificDate (spDate:DateTime) =
     fun d -> spDate
