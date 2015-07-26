@@ -169,12 +169,16 @@ type BasicParsing() =
     [<TestCase("next weekend")>]
     member x.``next weekend parse ok``(input : string) =
       let expected = SuccessfulParse(DateTime(2015,1,10))
+      let actual = sut.Parse(input,baseTestDate)
+      printfn "%A" actual
       Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
 
     [<Test>]
     [<TestCase("next month")>]
     member x.``next month parse ok``(input : string) =
       let expected = SuccessfulParse(DateTime(2015,2,1))
+      let actual = sut.Parse(input,baseTestDate)
+      printfn "%A" actual
       Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
 
     [<Test>]

@@ -50,16 +50,17 @@ type AbsoluteShift =
 
 // New
 module Types =
-  // Declaration of independence - special dates, valid only on it's own
-  // Today, tomorrow, yesterday - special cases, valid only on it's own
-  // Monday, Tuesday, ... - valid on it's own and with some shifts (next, last, previous)
-  // Day, week, month - valid only with shifts of all kinds (next, last, 2, 5)
-
   type SpecificDate =
     | Today
     | Tomorrow
     | Yesterday
     | Specific of DateTime
+      with member x.Apply =
+                    match x with
+                      | Today -> id
+                      | Tomorrow -> addDay 1
+                      | Yesterday -> addDay -1
+                      | Specific(dt) -> specificDate dt
 
   type RelativeOffset =
     | Next
@@ -77,14 +78,15 @@ module Types =
   type DateParts =
     | Day
     | Week
+    | Fortnight
     | Month
     | Year
 
   type Shift =
     | Date of SpecificDate
-    | Weekday of Weekdays
-    | RelativeDay of RelativeOffset * Weekdays
-    | RelativeShift of RelativeOffset * DateParts * Shift
+    | Weekday of DayOfWeek
+    | RelativeDay of RelativeOffset * DayOfWeek
+    | RelativeShift of RelativeOffset * DateParts
     | AbsoluteForwardShift of int * DateParts * Shift
     | AbsoluteBackwardShift of int * DateParts * Shift
     | Ago of int * DateParts
@@ -93,60 +95,100 @@ module NewParsers =
   open Types
   let relativeDateP : Parser<SpecificDate,unit> =
     choice [
-      stringCIReturn "today" Today
-      stringCIReturn "tomorrow" Tomorrow
-      stringCIReturn "yesterday" Yesterday
+      anyLabel ["today"; "tdy" ; "now"] >>% Today
+      anyLabel ["tomorow";"tomorrow";"tommorrow";"tommorow";"tmr"] >>% Tomorrow
+      anyLabel ["yesterday"; "yest" ; "ye"] >>% Yesterday
     ] .>> spaces
 
   let relativeOffsetP : Parser<RelativeOffset,unit> =
     choice [
-      stringCIReturn "next" Next
-      stringCIReturn "previous" Previous
+      anyLabel ["next" ; "following"] >>% Next
+      anyLabel ["previous" ; "next"] >>% Previous
     ] .>> spaces
 
-  let weekdaysP : Parser<Weekdays,unit> =
+  let weekdaysP : Parser<DayOfWeek,unit> =
     choice [
-      stringCIReturn "Monday" Monday
-      stringCIReturn "Tuesday" Tuesday
-      stringCIReturn "Wednesday" Wednesday
-      stringCIReturn "Thursday" Thursday
-      stringCIReturn "Friday" Friday
-      stringCIReturn "Saturday" Saturday
-      stringCIReturn "Sunday" Sunday
-    ]
+      anyLabel ["Monday"; "mon"] >>% DayOfWeek.Monday
+      anyLabel ["Tuesday"; "tue"] >>% DayOfWeek.Tuesday
+      anyLabel ["Wednesday"; "wed"] >>% DayOfWeek.Wednesday
+      anyLabel ["Thursday"; "thu"] >>%DayOfWeek.Thursday
+      anyLabel ["Friday" ; "fri"] >>% DayOfWeek.Friday
+      anyLabel ["Saturday" ; "sat" ; "weekend"] >>% DayOfWeek.Saturday
+      anyLabel ["Sunday" ; "sun"] >>% DayOfWeek.Sunday
+    ] .>> spaces
 
   let datePartsP : Parser<DateParts, unit> =
     choice [
-      stringCIReturn "Day" Day
-      stringCIReturn "Week" Week
-      stringCIReturn "Month" Month
-      stringCIReturn "Year" Year
-    ]
+      anyLabel ["Day"; "days"] >>% Day
+      anyLabel ["Week"; "weeks"] >>% Week
+      anyLabel ["Fortnight" ; "fortnights"] >>% Fortnight
+      anyLabel ["Month" ; "months"] >>% Month
+      anyLabel ["Year" ; "years"] >>% Year
+    ] .>> spaces
 
-  let completeP : Parser<Shift,unit> =
+  let fallbackP =
+      many1CharsTill
+        (noneOf " \n\t")
+        ((skipAnyOf " \n\t") <|> eof)
+        >>=
+        (fun x ->
+          DateTime.TryParse(x) // DateTime.TryParseExact(x,["yyyymmdd"],Globalization.CultureInfo.InvariantCulture, Globalization.DateTimeStyles.None)
+          |> function
+              | (true, date) -> preturn(date)
+              | (false,_) -> fail "date not recognized")
+
+  let previous datePart date =
+    match datePart with
+      | Day -> addDay -1 date
+      | Week -> lastWeek date
+      | Fortnight -> lastWeek (lastWeek date)
+      | Month -> lastMonth date
+      | Year -> lastYear date
+  let next datePart date =
+    match datePart with
+      | Day -> addDay 1 date
+      | Week -> nextOccurenceOf DayOfWeek.Monday date
+      | Fortnight -> nextOccurenceOf DayOfWeek.Monday ((nextOccurenceOf DayOfWeek.Monday) date)
+      | Month -> nextMonth date
+      | Year -> nextYear date
+  let move size datePart date =
+    match datePart with
+      | Day -> addDay size date
+      | Week -> addWeek size date
+      | Fortnight -> addWeek (2*size) date
+      | Month -> addMonth size date
+      | Year -> addYear size date
+
+  let rec evaluate =
+    function
+        | Date(d) -> d.Apply
+        | Weekday(day) -> nextOccurenceOf day
+        | RelativeDay(offset, weekday) -> match offset with
+                                            | Previous -> previousOccurenceOf weekday
+                                            | Next -> nextOccurenceOf weekday
+        | RelativeShift(offset,datePart) -> match offset with
+                                                    | Previous -> (previous datePart) //>> (evaluate shift)
+                                                    | Next -> (next datePart) //>> (evaluate shift)
+        | AbsoluteForwardShift(size, datePart, shift) -> (move size datePart) >> evaluate shift
+        | AbsoluteBackwardShift(size, datePart, shift) -> (move -size datePart) >> evaluate shift
+        | Ago(size, datePart) -> (move -size datePart)
+
+  let completeP =
     let pars, refPar = createParserForwardedToRef()
     refPar :=
       choice [
         relativeDateP |>> Date
         weekdaysP |>> Weekday
-        relativeOffsetP .>>. weekdaysP |>> RelativeDay
-        relativeOffsetP .>>. datePartsP .>>. pars |>> fun ((x,y),z) -> RelativeShift(x,y,z)
-        (pint32 .>> spaces .>>. datePartsP .>> skipStringCI "after" .>>. pars) |>> fun ((x,y),z) -> AbsoluteForwardShift(x,y,z)
-        (pint32 .>> spaces .>>. datePartsP .>> skipStringCI "before" .>>. pars) |>> fun ((x,y),z) -> AbsoluteBackwardShift(x,y,z)
-        (pint32 .>> spaces .>>. datePartsP .>> skipStringCI "ago") |>> Ago
+        attempt (relativeOffsetP .>>. datePartsP) |>> RelativeShift
+        attempt (relativeOffsetP .>>. weekdaysP)|>> RelativeDay
+        attempt (pint32 .>> spaces .>>. datePartsP .>> anyLabel ["after"; "from"] .>>. pars) |>> fun ((x,y),z) -> AbsoluteForwardShift(x,y,z)
+        attempt (pint32 .>> spaces .>>. datePartsP .>> anyLabel ["before"] .>>. pars) |>> fun ((x,y),z) -> AbsoluteBackwardShift(x,y,z)
+        attempt (pint32 .>> spaces .>>. datePartsP .>> anyLabel ["ago"]) |>> Ago
+        fallbackP |>> fun date -> Date(Specific(date))
       ]
     pars
-    //let combinedParser =
-    //  let pars, refPar = createParserForwardedToRef()
-    //  refPar := choice [
-    //    InternalParsers.relativeAnchorP staticShifts
-    //    InternalParsers.agoP basicShifts
-    //    InternalParsers.forwardShiftP conf.ForwardShiftKeywords basicShifts pars
-    //    InternalParsers.backShiftP conf.BackShiftKeywords basicShifts pars
-    //    InternalParsers.nextP relativeShifts
-    //    InternalParsers.fallbackP
-    //    ]
-    //  pars
+    |>> evaluate
+
 
 type ParserConfig =
   {
@@ -172,40 +214,6 @@ type ParserConfig =
 // Monday = next Monday
 
 module InternalParsers =
-
-  //let shiftTypeP =
-  //  choice [
-  //    stringCIReturn "next" Next
-  //    stringCIReturn "previous" Previous
-  //    pint32 |>> fun size -> Countable size
-  //    preturn Next
-  //  ] .>> spaces
-  //
-  //let shift2P (shift:Shift) =
-  //  createParser shift.Apply shift.Labels
-  //
-  //let shiftsP (shifts:Shift seq) =
-  //  shifts |> Seq.map shift2P |> choice
-  //
-  //let combP (shifts:Shift seq) =
-  //  pipe2
-  //    (shiftTypeP)
-  //    (shiftsP shifts)
-  //    (|>)
-  //
-  //let directionP =
-  //  choice[
-  //    anyLabel ["from"] >>% Forward
-  //    anyLabel ["before"] >>% Backward
-  //  ]
-  //
-  //let comb2P (shifts:Shift seq) =
-  //  pipe2
-  //    (combP shifts)
-  //    directionP
-  //    (<|)
-
-
   let relativeAnchorP (staticShifts : StaticShifts list) =
     staticShifts
     |> List.sortBy(fun shift -> shift.Priority)
@@ -319,10 +327,12 @@ type DateParser(?config:ParserConfig) =
       ]
     pars
 
+  let newParser = NewParsers.completeP
 
   member this.Parse(arg:string, ?baseDate : DateTime) =
     let bDate = defaultArg baseDate DateTime.Now
-    match run (spaces >>. combinedParser .>> eof) arg with
+    //match run (spaces >>. combinedParser .>> eof) arg with
+    match run (spaces >>. newParser .>> eof) arg with
       | Success (result, _, _) -> SuccessfulParse(result bDate)
       | Failure(x,y,z) -> FailedParse(x)
 
