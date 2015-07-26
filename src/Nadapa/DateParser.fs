@@ -82,6 +82,22 @@ module Types =
     | Month
     | Year
 
+  type RelativeShift =
+    | DayShift of DayOfWeek
+    | PeriodShift of DateParts
+  type AbsoluteShift =
+    | Before of NewShift
+    | After of NewShift
+    | Ago
+  and NewShift =
+    | Date of SpecificDate
+    | Weekday of DayOfWeek
+    | Relative of RelativeOffset * RelativeShift
+    | Absolute of int * DateParts * AbsoluteShift
+
+
+
+
   type Shift =
     | Date of SpecificDate
     | Weekday of DayOfWeek
@@ -111,7 +127,7 @@ module NewParsers =
       anyLabel ["Monday"; "mon"] >>% DayOfWeek.Monday
       anyLabel ["Tuesday"; "tue"] >>% DayOfWeek.Tuesday
       anyLabel ["Wednesday"; "wed"] >>% DayOfWeek.Wednesday
-      anyLabel ["Thursday"; "thu"] >>%DayOfWeek.Thursday
+      anyLabel ["Thursday"; "thu"] >>% DayOfWeek.Thursday
       anyLabel ["Friday" ; "fri"] >>% DayOfWeek.Friday
       anyLabel ["Saturday" ; "sat" ; "weekend"] >>% DayOfWeek.Saturday
       anyLabel ["Sunday" ; "sun"] >>% DayOfWeek.Sunday
@@ -125,6 +141,38 @@ module NewParsers =
       anyLabel ["Month" ; "months"] >>% Month
       anyLabel ["Year" ; "years"] >>% Year
     ] .>> spaces
+
+  let relativeShiftP : Parser<RelativeShift, unit>=
+    [
+      ["Monday"; "mon"], DayShift DayOfWeek.Monday
+      ["Tuesday"; "tue"] , DayShift DayOfWeek.Tuesday
+      ["Wednesday"; "wed"] , DayShift DayOfWeek.Wednesday
+      ["Thursday"; "thu"] , DayShift DayOfWeek.Thursday
+      ["Friday" ; "fri"] , DayShift DayOfWeek.Friday
+      ["Saturday" ; "sat" ; "weekend"] , DayShift DayOfWeek.Saturday
+      ["Sunday" ; "sun"] , DayShift DayOfWeek.Sunday
+      ["Day"; "days"] , PeriodShift Day
+      ["Week"; "weeks"] , PeriodShift Week
+      ["Fortnight" ; "fortnights"] , PeriodShift Fortnight
+      ["Month" ; "months"] , PeriodShift Month
+      ["Year" ; "years"] , PeriodShift Year
+    ]
+    |> createP
+
+  let relativeP =
+    relativeOffsetP .>>. relativeShiftP |>> Relative
+
+  let absoluteShiftP par =
+    [
+      anyLabel ["after"; "from"] >>. par |>> After
+      anyLabel ["before"] >>. par |>> Before
+      anyLabel ["ago"] >>% AbsoluteShift.Ago
+    ]
+    |> choice
+
+  let absoluteP par =
+    pint32 .>> spaces .>>. datePartsP .>>. absoluteShiftP par |>> fun((x,y),z) -> Absolute(x,y,z)
+
 
   let fallbackP =
       many1CharsTill
@@ -151,6 +199,25 @@ module NewParsers =
       | Fortnight -> nextOccurenceOf DayOfWeek.Monday ((nextOccurenceOf DayOfWeek.Monday) date)
       | Month -> nextMonth date
       | Year -> nextYear date
+
+  let newprevious relativeShift date =
+    match relativeShift with
+      | PeriodShift Day -> addDay -1 date
+      | PeriodShift Week -> lastWeek date
+      | PeriodShift Fortnight -> lastWeek (lastWeek date)
+      | PeriodShift Month -> lastMonth date
+      | PeriodShift Year -> lastYear date
+      | DayShift x -> previousOccurenceOf x date
+
+  let newnext datePart date =
+    match datePart with
+      | PeriodShift Day -> addDay 1 date
+      | PeriodShift Week -> nextOccurenceOf DayOfWeek.Monday date
+      | PeriodShift Fortnight -> nextOccurenceOf DayOfWeek.Monday ((nextOccurenceOf DayOfWeek.Monday) date)
+      | PeriodShift Month -> nextMonth date
+      | PeriodShift Year -> nextYear date
+      | DayShift x -> nextOccurenceOf x date
+
   let move size datePart date =
     match datePart with
       | Day -> addDay size date
@@ -172,7 +239,17 @@ module NewParsers =
         | AbsoluteForwardShift(size, datePart, shift) -> (move size datePart) >> evaluate shift
         | AbsoluteBackwardShift(size, datePart, shift) -> (move -size datePart) >> evaluate shift
         | Ago(size, datePart) -> (move -size datePart)
-
+  let rec newEvaluate =
+    function
+        | NewShift.Date(d) -> d.Apply
+        | NewShift.Weekday(day) -> nextOccurenceOf day
+        | Relative(offset, shift) -> match offset with
+                                            | Previous -> newprevious shift
+                                            | Next -> newnext shift
+        | Absolute(size, datePart, shift) -> match shift with
+                                                  | Before sh -> (move -size datePart) >> newEvaluate sh
+                                                  | After sh -> (move size datePart) >> newEvaluate sh
+                                                  | AbsoluteShift.Ago -> (move -size datePart)
   let completeP =
     let pars, refPar = createParserForwardedToRef()
     refPar :=
@@ -180,7 +257,7 @@ module NewParsers =
         relativeDateP |>> Date
         weekdaysP |>> Weekday
         attempt (relativeOffsetP .>>. datePartsP) |>> RelativeShift
-        attempt (relativeOffsetP .>>. weekdaysP)|>> RelativeDay
+        attempt (relativeOffsetP .>>. weekdaysP) |>> RelativeDay
         attempt (pint32 .>> spaces .>>. datePartsP .>> anyLabel ["after"; "from"] .>>. pars) |>> fun ((x,y),z) -> AbsoluteForwardShift(x,y,z)
         attempt (pint32 .>> spaces .>>. datePartsP .>> anyLabel ["before"] .>>. pars) |>> fun ((x,y),z) -> AbsoluteBackwardShift(x,y,z)
         attempt (pint32 .>> spaces .>>. datePartsP .>> anyLabel ["ago"]) |>> Ago
@@ -188,6 +265,19 @@ module NewParsers =
       ]
     pars
     |>> evaluate
+
+  let newCompleteP =
+    let pars, refPar = createParserForwardedToRef()
+    refPar :=
+      choice [
+        relativeDateP |>> NewShift.Date
+        weekdaysP |>> NewShift.Weekday
+        relativeP
+        attempt (absoluteP pars)
+        fallbackP |>> fun date -> NewShift.Date(Specific(date))
+      ]
+    pars
+    |>> newEvaluate
 
 
 type ParserConfig =
@@ -332,7 +422,7 @@ type DateParser(?config:ParserConfig) =
   member this.Parse(arg:string, ?baseDate : DateTime) =
     let bDate = defaultArg baseDate DateTime.Now
     //match run (spaces >>. combinedParser .>> eof) arg with
-    match run (spaces >>. newParser .>> eof) arg with
+    match run (spaces >>. NewParsers.newCompleteP .>> eof) arg with
       | Success (result, _, _) -> SuccessfulParse(result bDate)
       | Failure(x,y,z) -> FailedParse(x)
 
