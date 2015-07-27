@@ -3,33 +3,7 @@ open System
 open FParsec
 open DateUtils
 
-module Config =
-  type DateParts =
-    {
-      Day : string seq
-      Week : string seq
-      Month : string seq
-      Year : string seq
-    }
-
-  type WeekDays =
-    {
-      Monday : string seq
-      Tuesday : string seq
-      Wednesday : string seq
-      Thursday : string seq
-      Friday : string seq
-      Saturday : string seq
-      Sunday : string seq
-    }
-
-type DateTransform = DateTime -> DateTime
-
-type ParseResult =
-  | SuccessfulParse of DateTime
-  | FailedParse of string
-
-module Types =
+module Domain =
   type SpecificDate =
     | Today
     | Tomorrow
@@ -50,6 +24,7 @@ module Types =
   type RelativeShift =
     | DayShift of DayOfWeek
     | PeriodShift of DateParts
+
   type AbsoluteShift =
     | Before of Shift
     | After of Shift
@@ -60,8 +35,15 @@ module Types =
     | Relative of RelativeOffset * RelativeShift
     | Absolute of int * DateParts * AbsoluteShift
 
-module NewParsers =
-  open Types
+module Configuration =
+  open Domain
+  
+  type KeywordsLabels =
+    {
+      After : string seq
+      Before : string seq
+      Ago : string seq
+    }
 
   let weekdays =
     [
@@ -83,56 +65,28 @@ module NewParsers =
       ["Year" ; "years"] , Year
     ]
 
-  let relativeDateP : Parser<SpecificDate,unit> =
-    choice [
-      anyLabel ["today"; "tdy" ; "now"] >>% Today
-      anyLabel ["tomorow";"tomorrow";"tommorrow";"tommorow";"tmr"] >>% Tomorrow
-      anyLabel ["yesterday"; "yest" ; "ye"] >>% Yesterday
-    ] .>> spaces
-
-  let relativeOffsetP : Parser<RelativeOffset,unit> =
-    choice [
-      anyLabel ["next" ; "following"] >>% Next
-      anyLabel ["previous" ; "next"] >>% Previous
-    ] .>> spaces
-
-  let weekdaysP : Parser<DayOfWeek,unit> =
-    weekdays |> createP .>> spaces
-
-  let datePartsP : Parser<DateParts, unit> =
-    dateParts |> createP .>> spaces
-
-  let relativeShiftP : Parser<RelativeShift, unit>=
-    (weekdays |> List.map(fun (labs, day) -> labs, DayShift day))
-    @
-    (dateParts |> List.map(fun (labs,part) -> labs, PeriodShift part))
-    |> createP
-
-  let relativeP =
-    relativeOffsetP .>>. relativeShiftP |>> Relative
-
-  let absoluteShiftP par =
+  let relativeOffsets =
     [
-      anyLabel ["after"; "from"] >>. par |>> After
-      anyLabel ["before"] >>. par |>> Before
-      anyLabel ["ago"] >>% AbsoluteShift.Ago
+      ["next" ; "following"] , Next
+      ["previous" ; "last"] , Previous
     ]
-    |> choice
 
-  let absoluteP par =
-    pint32 .>> spaces .>>. datePartsP .>>. absoluteShiftP par |>> fun((x,y),z) -> Absolute(x,y,z)
+  let relativeDates =
+    [
+      ["today"; "tdy" ; "now"] , Today
+      ["tomorow";"tomorrow";"tommorrow";"tommorow";"tmr"] , Tomorrow
+      ["yesterday"; "yest" ; "ye"] , Yesterday
+    ]
 
-  let fallbackP =
-      many1CharsTill
-        (noneOf " \n\t")
-        ((skipAnyOf " \n\t") <|> eof)
-        >>=
-        (fun x ->
-          DateTime.TryParse(x) // DateTime.TryParseExact(x,["yyyymmdd"],Globalization.CultureInfo.InvariantCulture, Globalization.DateTimeStyles.None)
-          |> function
-              | (true, date) -> preturn(date)
-              | (false,_) -> fail "date not recognized")
+  let defaultKeywords =
+    {
+      After = ["after" ; "from"]
+      Before = ["before"]
+      Ago = ["ago"]
+    }
 
+module Evaluation =
+  open Domain
   let special =
     function
       | Today -> id
@@ -177,59 +131,78 @@ module NewParsers =
                                                   | Before sh -> (move -size datePart) >> evaluate sh
                                                   | After sh -> (move size datePart) >> evaluate sh
                                                   | AbsoluteShift.Ago -> (move -size datePart)
+
+module Parsers =
+  open Domain
+  open Configuration
+
+  let relativeDateP : Parser<SpecificDate,unit> =
+    relativeDates |> createP
+
+  let relativeOffsetP : Parser<RelativeOffset,unit> =
+    relativeOffsets |> createP
+
+  let weekdaysP : Parser<DayOfWeek,unit> =
+    weekdays |> createP
+
+  let datePartsP : Parser<DateParts, unit> =
+    dateParts |> createP
+
+  let relativeShiftP : Parser<RelativeShift, unit>=
+    (weekdays |> List.map(fun (labs, day) -> labs, DayShift day))
+    @
+    (dateParts |> List.map(fun (labs,part) -> labs, PeriodShift part))
+    |> createP
+
+  let relativeP =
+    relativeOffsetP .>>. relativeShiftP
+
+  let absoluteShiftP par =
+    [
+      anyLabel defaultKeywords.After >>. par |>> After
+      anyLabel defaultKeywords.Before >>. par |>> Before
+      anyLabel defaultKeywords.Ago >>% Ago
+    ]
+    |> choice
+
+  let absoluteP par =
+    pint32 .>> spaces .>>.? datePartsP .>>. absoluteShiftP par |>> fun((x,y),z) -> (x,y,z)
+
+  let dateFormatP =
+    regex @"\d{4}[\-/]?\d{2}[\-/]?\d{2}"
+    >>=
+    fun x ->
+      match DateTime.TryParseExact(x,[|"yyyy-MM-dd" ; "yyyyMMdd" ; "yyyy/MM/dd"|],Globalization.CultureInfo.InvariantCulture, Globalization.DateTimeStyles.None) with
+        | (true,date) -> preturn(Specific(date))
+        | (false,_) -> fail "Date not recognized"
+
   let completeP =
     let pars, refPar = createParserForwardedToRef()
     refPar :=
       choice [
         relativeDateP |>> Date
         weekdaysP |>> Weekday
-        relativeP
-        attempt (absoluteP pars)
-        fallbackP |>> fun date -> Date(Specific(date))
+        relativeP |>> Relative
+        absoluteP pars |>> Absolute
+        dateFormatP |>> Date
       ]
     pars
-    |>> evaluate
+    |>> Evaluation.evaluate
 
 
-type ParserConfig =
-  {
-    Yesterday : string list
-    Today: string list
-    Tomorrow : string list
-    Day : string list
-    Week : string list
-    Fortnight : string list
-    Month : string list
-    Year : string list
-    BackShiftKeywords : string list
-    ForwardShiftKeywords : string list
-  }
+type ParseResult =
+  | SuccessfulParse of DateTime
+  | FailedParse of string
 
-type DateParser(?config:ParserConfig) =
-  let conf =
-    defaultArg
-      config
-      {
-          Yesterday = ["yesterday"; "yest" ; "ye"]
-          Today = ["today"; "tdy" ; "now"]
-          Tomorrow = ["tomorow";"tomorrow";"tommorrow";"tommorow";"tmr"]
-          Day = ["days"; "day"]
-          Week = ["weeks"; "week"]
-          Fortnight = ["fortnight" ; "fortnights"]
-          Month = ["months" ; "month"]
-          Year = ["years" ; "year"]
-          BackShiftKeywords = ["before"]
-          ForwardShiftKeywords = ["from"; "after"]
-      }
-
+type DateParser() =
   member this.Parse(arg:string, ?baseDate : DateTime) =
     let bDate = defaultArg baseDate DateTime.Now
-    match run (spaces >>. NewParsers.completeP .>> eof) arg with
+    match run (spaces >>. Parsers.completeP .>> eof) arg with
       | Success (result, _, _) -> SuccessfulParse(result bDate)
       | Failure(x,y,z) -> FailedParse(x)
 
   member this.ParseAtEnd(arg:string, ?baseDate : DateTime) =
     let bDate = defaultArg baseDate DateTime.Now
-    match run ( manyCharsTillApply anyChar (attempt(NewParsers.completeP)) (fun x y -> y) .>> eof) arg with
+    match run ( manyCharsTillApply anyChar (attempt(Parsers.completeP)) (fun x y -> y) .>> eof) arg with
       | Success (result, _, _) -> SuccessfulParse(result bDate)
       | Failure(x,y,z) -> FailedParse(x)
