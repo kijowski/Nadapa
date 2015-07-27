@@ -68,6 +68,27 @@ module Types =
 
 module NewParsers =
   open Types
+
+  let weekdays =
+    [
+      ["Monday"; "mon"], DayOfWeek.Monday
+      ["Tuesday"; "tue"] ,  DayOfWeek.Tuesday
+      ["Wednesday"; "wed"] ,  DayOfWeek.Wednesday
+      ["Thursday"; "thu"] , DayOfWeek.Thursday
+      ["Friday" ; "fri"] ,  DayOfWeek.Friday
+      ["Saturday" ; "sat" ; "weekend"] ,  DayOfWeek.Saturday
+      ["Sunday" ; "sun"] , DayOfWeek.Sunday
+    ]
+
+  let dateParts =
+    [
+      ["Day"; "days"] , Day
+      ["Week"; "weeks"] ,  Week
+      ["Fortnight" ; "fortnights"] , Fortnight
+      ["Month" ; "months"] ,  Month
+      ["Year" ; "years"] , Year
+    ]
+
   let relativeDateP : Parser<SpecificDate,unit> =
     choice [
       anyLabel ["today"; "tdy" ; "now"] >>% Today
@@ -82,40 +103,15 @@ module NewParsers =
     ] .>> spaces
 
   let weekdaysP : Parser<DayOfWeek,unit> =
-    choice [
-      anyLabel ["Monday"; "mon"] >>% DayOfWeek.Monday
-      anyLabel ["Tuesday"; "tue"] >>% DayOfWeek.Tuesday
-      anyLabel ["Wednesday"; "wed"] >>% DayOfWeek.Wednesday
-      anyLabel ["Thursday"; "thu"] >>% DayOfWeek.Thursday
-      anyLabel ["Friday" ; "fri"] >>% DayOfWeek.Friday
-      anyLabel ["Saturday" ; "sat" ; "weekend"] >>% DayOfWeek.Saturday
-      anyLabel ["Sunday" ; "sun"] >>% DayOfWeek.Sunday
-    ] .>> spaces
+    weekdays |> createP .>> spaces
 
   let datePartsP : Parser<DateParts, unit> =
-    choice [
-      anyLabel ["Day"; "days"] >>% Day
-      anyLabel ["Week"; "weeks"] >>% Week
-      anyLabel ["Fortnight" ; "fortnights"] >>% Fortnight
-      anyLabel ["Month" ; "months"] >>% Month
-      anyLabel ["Year" ; "years"] >>% Year
-    ] .>> spaces
+    dateParts |> createP .>> spaces
 
   let relativeShiftP : Parser<RelativeShift, unit>=
-    [
-      ["Monday"; "mon"], DayShift DayOfWeek.Monday
-      ["Tuesday"; "tue"] , DayShift DayOfWeek.Tuesday
-      ["Wednesday"; "wed"] , DayShift DayOfWeek.Wednesday
-      ["Thursday"; "thu"] , DayShift DayOfWeek.Thursday
-      ["Friday" ; "fri"] , DayShift DayOfWeek.Friday
-      ["Saturday" ; "sat" ; "weekend"] , DayShift DayOfWeek.Saturday
-      ["Sunday" ; "sun"] , DayShift DayOfWeek.Sunday
-      ["Day"; "days"] , PeriodShift Day
-      ["Week"; "weeks"] , PeriodShift Week
-      ["Fortnight" ; "fortnights"] , PeriodShift Fortnight
-      ["Month" ; "months"] , PeriodShift Month
-      ["Year" ; "years"] , PeriodShift Year
-    ]
+    (weekdays |> List.map(fun (labs, day) -> labs, DayShift day))
+    @
+    (dateParts |> List.map(fun (labs,part) -> labs, PeriodShift part))
     |> createP
 
   let relativeP =
