@@ -35,12 +35,6 @@ module Types =
     | Tomorrow
     | Yesterday
     | Specific of DateTime
-      with member x.Apply =
-                    match x with
-                      | Today -> id
-                      | Tomorrow -> addDay 1
-                      | Yesterday -> addDay -1
-                      | Specific(dt) -> specificDate dt
 
   type RelativeOffset =
     | Next
@@ -139,6 +133,13 @@ module NewParsers =
               | (true, date) -> preturn(date)
               | (false,_) -> fail "date not recognized")
 
+  let special =
+    function
+      | Today -> id
+      | Tomorrow -> addDay 1
+      | Yesterday -> addDay -1
+      | Specific(dt) -> specificDate dt
+
   let previous  =
     function
       | PeriodShift Day -> addDay -1
@@ -151,8 +152,8 @@ module NewParsers =
   let next =
     function
       | PeriodShift Day -> addDay 1
-      | PeriodShift Week -> nextOccurenceOf DayOfWeek.Monday
-      | PeriodShift Fortnight -> nextOccurenceOf DayOfWeek.Monday >> nextOccurenceOf DayOfWeek.Monday
+      | PeriodShift Week -> nextWeek
+      | PeriodShift Fortnight -> nextWeek >> nextWeek
       | PeriodShift Month -> nextMonth
       | PeriodShift Year -> nextYear
       | DayShift x -> nextOccurenceOf x
@@ -167,7 +168,7 @@ module NewParsers =
 
   let rec evaluate =
     function
-        | Date(d) -> d.Apply
+        | Date(d) -> special d
         | Weekday(day) -> nextOccurenceOf day
         | Relative(offset, shift) -> match offset with
                                             | Previous -> previous shift

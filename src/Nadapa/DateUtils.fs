@@ -23,8 +23,10 @@ module DateUtils =
       then d
       else noo (addDay -1 d)
     noo (addDay -1 date)
-  let nextWeekend (date:DateTime) =
+  let nextWeekend (date:DateTime)=
     nextOccurenceOf DayOfWeek.Saturday
+  let nextWeek =
+    nextOccurenceOf DayOfWeek.Monday
   let nextMonth (date:DateTime) =
     DateTime(date.Year, (date.Month + 1 % 12), 1)
   let nextYear (date:DateTime) =
