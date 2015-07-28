@@ -37,7 +37,13 @@ module Domain =
 
 module Configuration =
   open Domain
-  
+  open FSharp.Configuration
+
+  type Config = YamlConfig<"config.yaml">
+
+  let config = Config()
+
+
   type KeywordsLabels =
     {
       After : string seq
@@ -73,7 +79,8 @@ module Configuration =
 
   let relativeDates =
     [
-      ["today"; "tdy" ; "now"] , Today
+      //["today"; "tdy" ; "now"] , Today
+      config.today |> Seq.toList, Today
       ["tomorow";"tomorrow";"tommorrow";"tommorow";"tmr"] , Tomorrow
       ["yesterday"; "yest" ; "ye"] , Yesterday
     ]

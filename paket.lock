@@ -3,6 +3,7 @@ NUGET
   specs:
     FAKE (4.0.1)
     FParsec (1.0.1)
+    FSharp.Configuration (0.5.3)
     FSharp.Core (3.1.2.5) - framework: >= net45
     NUnit (2.6.4) - framework: >= net45
     NUnit.Runners (2.6.4)
