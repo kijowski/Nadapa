@@ -123,6 +123,15 @@ Target "Build" (fun _ ->
 )
 
 // --------------------------------------------------------------------------------------
+// Build library & test project for Atom addin that expects Debug
+
+Target "BuildForAtom" (fun _ ->
+    !! solutionFile
+    |> MSBuildDebug "" "Rebuild"
+    |> ignore
+)
+
+// --------------------------------------------------------------------------------------
 // Run the unit tests using test runner
 
 Target "RunTests" (fun _ ->
@@ -164,6 +173,9 @@ Target "All" DoNothing
   ==> "CopyBinaries"
   ==> "RunTests"
   ==> "All"
+
+"Clean"
+  ==> "BuildForAtom"
 
 "All"
   ==> "NuGet"
