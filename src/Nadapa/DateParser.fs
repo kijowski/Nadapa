@@ -43,55 +43,38 @@ module Configuration =
 
   let config = Config()
 
-
-  type KeywordsLabels =
-    {
-      After : string seq
-      Before : string seq
-      Ago : string seq
-    }
-
   let weekdays =
     [
-      ["Monday"; "mon"], DayOfWeek.Monday
-      ["Tuesday"; "tue"] ,  DayOfWeek.Tuesday
-      ["Wednesday"; "wed"] ,  DayOfWeek.Wednesday
-      ["Thursday"; "thu"] , DayOfWeek.Thursday
-      ["Friday" ; "fri"] ,  DayOfWeek.Friday
-      ["Saturday" ; "sat" ; "weekend"] ,  DayOfWeek.Saturday
-      ["Sunday" ; "sun"] , DayOfWeek.Sunday
+      config.weekdays.monday |> Seq.toList, DayOfWeek.Monday
+      config.weekdays.tuesday |> Seq.toList ,  DayOfWeek.Tuesday
+      config.weekdays.wednesday |> Seq.toList,  DayOfWeek.Wednesday
+      config.weekdays.thursday |> Seq.toList, DayOfWeek.Thursday
+      config.weekdays.friday |> Seq.toList,  DayOfWeek.Friday
+      config.weekdays.saturday |> Seq.toList,  DayOfWeek.Saturday
+      config.weekdays.sunday |> Seq.toList, DayOfWeek.Sunday
     ]
 
   let dateParts =
     [
-      ["Day"; "days"] , Day
-      ["Week"; "weeks"] ,  Week
-      ["Fortnight" ; "fortnights"] , Fortnight
-      ["Month" ; "months"] ,  Month
-      ["Year" ; "years"] , Year
+      config.day |> Seq.toList , Day
+      config.week |> Seq.toList ,  Week
+      config.fortnight |> Seq.toList , Fortnight
+      config.month |> Seq.toList ,  Month
+      config.year |> Seq.toList , Year
     ]
 
   let relativeOffsets =
     [
-      ["next" ; "following"] , Next
-      ["previous" ; "last"] , Previous
+      config.next |> Seq.toList , Next
+      config.last |> Seq.toList , Previous
     ]
 
   let relativeDates =
     [
-      //["today"; "tdy" ; "now"] , Today
       config.today |> Seq.toList, Today
-      ["tomorow";"tomorrow";"tommorrow";"tommorow";"tmr"] , Tomorrow
-      ["yesterday"; "yest" ; "ye"] , Yesterday
+      config.tomorrow |> Seq.toList, Tomorrow
+      config.yesterday |> Seq.toList, Yesterday
     ]
-
-  let defaultKeywords =
-    {
-      After = ["after" ; "from"]
-      Before = ["before"]
-      Ago = ["ago"]
-    }
-
 module Evaluation =
   open Domain
   let special =
@@ -166,9 +149,9 @@ module Parsers =
 
   let absoluteShiftP par =
     [
-      anyLabel defaultKeywords.After >>. par |>> After
-      anyLabel defaultKeywords.Before >>. par |>> Before
-      anyLabel defaultKeywords.Ago >>% Ago
+      anyLabel config.after >>. par |>> After
+      anyLabel config.before >>. par |>> Before
+      anyLabel config.ago >>% Ago
     ]
     |> choice
 
