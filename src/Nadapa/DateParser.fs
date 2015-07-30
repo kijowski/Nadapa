@@ -56,25 +56,31 @@ module Configuration =
 
   let dateParts =
     [
-      config.day |> Seq.toList , Day
-      config.week |> Seq.toList ,  Week
-      config.fortnight |> Seq.toList , Fortnight
-      config.month |> Seq.toList ,  Month
-      config.year |> Seq.toList , Year
+      config.dateparts.day |> Seq.toList , Day
+      config.dateparts.week |> Seq.toList ,  Week
+      config.dateparts.fortnight |> Seq.toList , Fortnight
+      config.dateparts.month |> Seq.toList ,  Month
+      config.dateparts.year |> Seq.toList , Year
     ]
 
   let relativeOffsets =
     [
-      config.next |> Seq.toList , Next
-      config.last |> Seq.toList , Previous
+      config.relative.next |> Seq.toList , Next
+      config.relative.last |> Seq.toList , Previous
     ]
 
   let relativeDates =
     [
-      config.today |> Seq.toList, Today
-      config.tomorrow |> Seq.toList, Tomorrow
-      config.yesterday |> Seq.toList, Yesterday
+      config.special.today |> Seq.toList, Today
+      config.special.tomorrow |> Seq.toList, Tomorrow
+      config.special.yesterday |> Seq.toList, Yesterday
     ]
+
+  let specificDates =
+    config.specific
+    |> Seq.map(fun item -> [item.label], Specific (DateTime.ParseExact(item.date,[|"yyyy-MM-dd" ; "yyyyMMdd" ; "yyyy/MM/dd"|],Globalization.CultureInfo.InvariantCulture, Globalization.DateTimeStyles.None)))
+    |> Seq.toList
+
 module Evaluation =
   open Domain
   let special =
@@ -126,6 +132,9 @@ module Parsers =
   open Domain
   open Configuration
 
+  let specificDateP =
+    specificDates |> createP
+
   let relativeDateP : Parser<SpecificDate,unit> =
     relativeDates |> createP
 
@@ -149,9 +158,9 @@ module Parsers =
 
   let absoluteShiftP par =
     [
-      anyLabel config.after >>. par |>> After
-      anyLabel config.before >>. par |>> Before
-      anyLabel config.ago >>% Ago
+      anyLabel config.absolute.after >>. par |>> After
+      anyLabel config.absolute.before >>. par |>> Before
+      anyLabel config.absolute.ago >>% Ago
     ]
     |> choice
 
@@ -170,6 +179,7 @@ module Parsers =
     let pars, refPar = createParserForwardedToRef()
     refPar :=
       choice [
+        specificDateP |>> Date
         relativeDateP |>> Date
         weekdaysP |>> Weekday
         relativeP |>> Relative

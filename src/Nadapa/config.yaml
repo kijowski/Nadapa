@@ -1,6 +1,7 @@
-today : [today, tdy, now]
-tomorrow : [tomorow, tomorrow, tommorrow, tommorow, tmr]
-yesterday : [yesterday, yest, ye]
+special:
+  today : [today, tdy, now]
+  tomorrow : [tomorow, tomorrow, tommorrow, tommorow, tmr]
+  yesterday : [yesterday, yest, ye]
 weekdays:
   monday : [monday, mon]
   tuesday : [tuesday, tue]
@@ -9,13 +10,19 @@ weekdays:
   friday : [friday, fri]
   saturday : [saturday, sat, weekend]
   sunday : [sunday, sun]
-after : [after, from]
-before : [before]
-ago : [ago]
-day : [day, days]
-week : [week, weeks]
-fortnight : [fortnight, fortnights]
-month: [month, months]
-year: [year, years]
-next: [next, following]
-last: [previous, last]
+dateparts:
+  day : [day, days]
+  week : [week, weeks]
+  fortnight : [fortnight, fortnights]
+  month: [month, months]
+  year: [year, years]
+relative:
+  next: [next, following]
+  last: [previous, last]
+absolute:
+  after : [after, from]
+  before : [before]
+  ago : [ago]
+specific:
+  - label: Turing's birthday
+    date: 1912-06-23

@@ -108,7 +108,6 @@ type BasicParsing() =
     [<TestCase("2012/03/06")>]
     member x.``ISO date literals parse OK``(input : string) =
         let expected = SuccessfulParse(DateTime(2012,3,6))
-        printf "%A" (sut.Parse(input,baseTestDate))
         Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
 
     [<Test>]
@@ -170,14 +169,12 @@ type BasicParsing() =
     [<TestCase("next weekend")>]
     member x.``next weekend parse ok``(input : string) =
       let expected = SuccessfulParse(DateTime(2015,1,10))
-      let actual = sut.Parse(input,baseTestDate)
       Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
 
     [<Test>]
     [<TestCase("next month")>]
     member x.``next month parse ok``(input : string) =
       let expected = SuccessfulParse(DateTime(2015,2,1))
-      let actual = sut.Parse(input,baseTestDate)
       Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
 
     [<Test>]
@@ -185,6 +182,13 @@ type BasicParsing() =
     member x.``next year parse ok``(input : string) =
       let expected = SuccessfulParse(DateTime(2016,1,1))
       Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
+
+    [<Test>]
+    [<TestCase("Turing's birthday")>]
+    member x.``Turing's birthday parse ok``(input : string) =
+      let expected = SuccessfulParse(DateTime(1912,06,23))
+      Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
+
 
 
     [<Test>]
