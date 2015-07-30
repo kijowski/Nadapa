@@ -111,49 +111,49 @@ type BasicParsing() =
     Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
 
   [<Test>]
-  [<TestCase("next monday")>]
+  [<TestCase("next Monday")>]
   [<TestCase("next mon")>]
   member x.``next monday on monday parse OK``(input : string) =
     let expected = SuccessfulParse(DateTime(2015,1,12))
     Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
 
   [<Test>]
-  [<TestCase("next tuesday")>]
+  [<TestCase("next Tuesday")>]
   [<TestCase("next tue")>]
   member x.``next thuesday on monday parse OK``(input : string) =
     let expected = SuccessfulParse(DateTime(2015,1,6))
     Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
 
   [<Test>]
-  [<TestCase("next wednesday")>]
+  [<TestCase("next Wednesday")>]
   [<TestCase("next wed")>]
   member x.``next wednesday on monday parse OK``(input : string) =
     let expected = SuccessfulParse(DateTime(2015,1,7))
     Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
 
   [<Test>]
-  [<TestCase("next thursday")>]
+  [<TestCase("next Thursday")>]
   [<TestCase("next thu")>]
   member x.``next thursday on monday parse OK``(input : string) =
     let expected = SuccessfulParse(DateTime(2015,1,8))
     Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
 
   [<Test>]
-  [<TestCase("next friday")>]
+  [<TestCase("next Friday")>]
   [<TestCase("next fri")>]
   member x.``next friday on monday parse OK``(input : string) =
     let expected = SuccessfulParse(DateTime(2015,1,9))
     Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
 
   [<Test>]
-  [<TestCase("next saturday")>]
+  [<TestCase("next Saturday")>]
   [<TestCase("next sat")>]
   member x.``next saturday on monday parse OK``(input : string) =
     let expected = SuccessfulParse(DateTime(2015,1,10))
     Assert.AreEqual(expected, sut.Parse(input,baseTestDate))
 
   [<Test>]
-  [<TestCase("next sunday")>]
+  [<TestCase("next Sunday")>]
   [<TestCase("next sun")>]
   member x.``next sunday on monday parse OK``(input : string) =
     let expected = SuccessfulParse(DateTime(2015,1,11))

@@ -1,39 +1,6 @@
 ﻿namespace Nadapa
 open System
 open FParsec
-open DateUtils
-
-module Domain =
-  type SpecificDate =
-    | Today
-    | Tomorrow
-    | Yesterday
-    | Specific of DateTime
-
-  type RelativeOffset =
-    | Next
-    | Previous
-
-  type DateParts =
-    | Day
-    | Week
-    | Fortnight
-    | Month
-    | Year
-
-  type RelativeShift =
-    | DayShift of DayOfWeek
-    | PeriodShift of DateParts
-
-  type AbsoluteShift =
-    | Before of Shift
-    | After of Shift
-    | Ago
-  and Shift =
-    | Date of SpecificDate
-    | Weekday of DayOfWeek
-    | Relative of RelativeOffset * RelativeShift
-    | Absolute of int * DateParts * AbsoluteShift
 
 module Configuration =
   open Domain
@@ -81,56 +48,11 @@ module Configuration =
     |> Seq.map(fun item -> [item.label], Specific (DateTime.ParseExact(item.date,[|"yyyy-MM-dd" ; "yyyyMMdd" ; "yyyy/MM/dd"|],Globalization.CultureInfo.InvariantCulture, Globalization.DateTimeStyles.None)))
     |> Seq.toList
 
-module Evaluation =
-  open Domain
-  let special =
-    function
-      | Today -> id
-      | Tomorrow -> addDay 1
-      | Yesterday -> addDay -1
-      | Specific(dt) -> specificDate dt
-
-  let previous  =
-    function
-      | PeriodShift Day -> addDay -1
-      | PeriodShift Week -> lastWeek
-      | PeriodShift Fortnight -> lastWeek >> lastWeek
-      | PeriodShift Month -> lastMonth
-      | PeriodShift Year -> lastYear
-      | DayShift x -> previousOccurenceOf x
-
-  let next =
-    function
-      | PeriodShift Day -> addDay 1
-      | PeriodShift Week -> nextWeek
-      | PeriodShift Fortnight -> nextWeek >> nextWeek
-      | PeriodShift Month -> nextMonth
-      | PeriodShift Year -> nextYear
-      | DayShift x -> nextOccurenceOf x
-
-  let move size =
-    function
-      | Day -> addDay size
-      | Week -> addWeek size
-      | Fortnight -> addWeek (2*size)
-      | Month -> addMonth size
-      | Year -> addYear size
-
-  let rec evaluate =
-    function
-        | Date(d) -> special d
-        | Weekday(day) -> nextOccurenceOf day
-        | Relative(offset, shift) -> match offset with
-                                            | Previous -> previous shift
-                                            | Next -> next shift
-        | Absolute(size, datePart, shift) -> match shift with
-                                                  | Before sh -> (move -size datePart) >> evaluate sh
-                                                  | After sh -> (move size datePart) >> evaluate sh
-                                                  | AbsoluteShift.Ago -> (move -size datePart)
-
 module Parsers =
   open Domain
   open Configuration
+
+  let createP x :Parser<'a,unit> = createParser config.caseSensitive x
 
   let specificDateP =
     specificDates |> createP

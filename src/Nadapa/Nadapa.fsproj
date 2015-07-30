@@ -42,7 +42,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="DateUtils.fs" />
+    <Compile Include="DomainModel.fs" />
+    <Compile Include="ResultEvaluation.fs" />
     <Compile Include="ParserUtils.fs" />
     <Compile Include="DateParser.fs" />
     <None Include="config.yaml">
