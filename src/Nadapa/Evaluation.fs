@@ -41,15 +41,13 @@ module Evaluation =
       DateTime(temp.Year, temp.Month, 1)
     let lastYear (date:DateTime) =
       DateTime(date.Year-1, 1, 1)
-    let specificDate (spDate:DateTime) =
-      fun d -> spDate
 
   let special =
     function
       | Today -> id
       | Tomorrow -> addDay 1
       | Yesterday -> addDay -1
-      | Specific(dt) -> specificDate dt
+      | Specific(dt) -> fun _ -> dt
 
   let previous  =
     function

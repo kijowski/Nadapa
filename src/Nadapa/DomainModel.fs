@@ -1,5 +1,6 @@
 namespace Nadapa
 open System
+open FSharp.Configuration
 
 module Domain =
   type SpecificDate =
@@ -32,3 +33,5 @@ module Domain =
     | Weekday of DayOfWeek
     | Relative of RelativeOffset * RelativeShift
     | Absolute of int * DateParts * AbsoluteShift
+
+  type ParserConfig = YamlConfig<"config.yaml">

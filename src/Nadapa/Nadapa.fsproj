@@ -43,8 +43,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="DomainModel.fs" />
-    <Compile Include="ResultEvaluation.fs" />
-    <Compile Include="ParserUtils.fs" />
+    <Compile Include="Evaluation.fs" />
     <Compile Include="DateParser.fs" />
     <None Include="config.yaml">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

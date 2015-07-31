@@ -25,5 +25,5 @@ absolute:
   before : [before]
   ago : [ago]
 specific:
-  - label: Turing's birthday
+  - label: [Turing's birthday]
     date: 1912-06-23
