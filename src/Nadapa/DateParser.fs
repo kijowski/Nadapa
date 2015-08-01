@@ -134,13 +134,13 @@ type DateParser(?configFile:string) =
           | Some(file) -> config.Load(file); Parsers.ParsingEngine(config)
           | None -> Parsers.ParsingEngine(config)
 
-  member this.Parse(arg:string, ?baseDate : DateTime) =
+  member x.Parse(arg:string, ?baseDate : DateTime) =
     let bDate = defaultArg baseDate DateTime.Now
     match parser.Parse arg with
       | Success (result, _, _) -> SuccessfulParse(result bDate)
       | Failure(x,y,z) -> FailedParse(x)
 
-  member this.ParseAtEnd(arg:string, ?baseDate : DateTime) =
+  member x.ParseAtEnd(arg:string, ?baseDate : DateTime) =
     let bDate = defaultArg baseDate DateTime.Now
     match parser.ParseAtEnd arg with
       | Success (result, _, _) -> SuccessfulParse(result bDate)
