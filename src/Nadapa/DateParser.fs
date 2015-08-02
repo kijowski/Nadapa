@@ -2,7 +2,7 @@
 open System
 open FParsec
 
-module Parsers =
+module Engine =
   open Domain
 
   type ParsingEngine(config:ParserConfig) =
@@ -131,8 +131,8 @@ type DateParser(?configFile:string) =
   let config = Domain.ParserConfig()
   let parser =
     match configFile with
-          | Some(file) -> config.Load(file); Parsers.ParsingEngine(config)
-          | None -> Parsers.ParsingEngine(config)
+          | Some(file) -> config.Load(file); Engine.ParsingEngine(config)
+          | None -> Engine.ParsingEngine(config)
 
   member x.Parse(arg:string, ?baseDate : DateTime) =
     let bDate = defaultArg baseDate DateTime.Now
