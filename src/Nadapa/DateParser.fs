@@ -127,12 +127,9 @@ type ParseResult =
   | SuccessfulParse of DateTime
   | FailedParse of string
 
-type DateParser(?configFile:string) =
-  let config = Domain.ParserConfig()
-  let parser =
-    match configFile with
-          | Some(file) -> config.Load(file); Engine.ParsingEngine(config)
-          | None -> Engine.ParsingEngine(config)
+type DateParser(?config:Domain.ParserConfig) =
+  let config = defaultArg config (Domain.ParserConfig())
+  let parser = Engine.ParsingEngine(config)
 
   member x.Parse(arg:string, ?baseDate : DateTime) =
     let bDate = defaultArg baseDate DateTime.Now
