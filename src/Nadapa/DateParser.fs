@@ -1,8 +1,11 @@
 ﻿namespace Nadapa
 open System
 open FParsec
+open FSharp.Configuration
 
-module Engine =
+type ParserConfig = YamlConfig<"config.yaml">
+
+module private Engine =
   open Domain
 
   type ParsingEngine(config:ParserConfig) =
@@ -41,7 +44,9 @@ module Engine =
 
     let specificDates =
       config.specific
-      |> Seq.map(fun item -> (item.label |> Seq.toList), Specific (DateTime.ParseExact(item.date,[|"yyyy-MM-dd" ; "yyyyMMdd" ; "yyyy/MM/dd"|],Globalization.CultureInfo.InvariantCulture, Globalization.DateTimeStyles.None)))
+      |> Seq.map(fun item ->
+          (item.label |> Seq.toList),
+          Specific (DateTime.ParseExact(item.date,[|"yyyy-MM-dd" ; "yyyyMMdd" ; "yyyy/MM/dd"|], Globalization.CultureInfo.InvariantCulture, Globalization.DateTimeStyles.None)))
       |> Seq.toList
 
     let anyLabel (labels:string seq) =
@@ -123,9 +128,9 @@ module Engine =
     member x.ParseAtEnd(arg) =
       run ( manyCharsTillApply anyChar (attempt(completeP)) (fun x y -> y) .>> eof) arg
 
-type DateParser(?config:Domain.ParserConfig) =
-  let config = defaultArg config (Domain.ParserConfig())
-  let parser = Engine.ParsingEngine(config)
+type DateParser(?config:ParserConfig) =
+  let conf = defaultArg config (ParserConfig())
+  let parser = Engine.ParsingEngine(conf)
 
   member x.Parse(arg:string, ?baseDate : DateTime) =
     let bDate = defaultArg baseDate DateTime.Now

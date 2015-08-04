@@ -1,5 +1,5 @@
 namespace Nadapa
-module Evaluation =
+module private Evaluation =
   open System
   open Domain
 
