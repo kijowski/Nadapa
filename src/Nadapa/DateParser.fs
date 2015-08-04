@@ -123,10 +123,6 @@ module Engine =
     member x.ParseAtEnd(arg) =
       run ( manyCharsTillApply anyChar (attempt(completeP)) (fun x y -> y) .>> eof) arg
 
-type ParseResult =
-  | SuccessfulParse of DateTime
-  | FailedParse of string
-
 type DateParser(?config:Domain.ParserConfig) =
   let config = defaultArg config (Domain.ParserConfig())
   let parser = Engine.ParsingEngine(config)
@@ -134,11 +130,11 @@ type DateParser(?config:Domain.ParserConfig) =
   member x.Parse(arg:string, ?baseDate : DateTime) =
     let bDate = defaultArg baseDate DateTime.Now
     match parser.Parse arg with
-      | Success (result, _, _) -> SuccessfulParse(result bDate)
-      | Failure(x,y,z) -> FailedParse(x)
+      | Success (result, _, _) -> Some(result bDate)
+      | Failure(_,_,_) -> None
 
   member x.ParseAtEnd(arg:string, ?baseDate : DateTime) =
     let bDate = defaultArg baseDate DateTime.Now
     match parser.ParseAtEnd arg with
-      | Success (result, _, _) -> SuccessfulParse(result bDate)
-      | Failure(x,y,z) -> FailedParse(x)
+      | Success (result, _, _) -> Some(result bDate)
+      | Failure(x,y,z) -> None
