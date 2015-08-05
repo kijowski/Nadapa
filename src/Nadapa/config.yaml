@@ -1,4 +1,3 @@
-caseSensitive : false
 special:
   today : [today, tdy, now]
   tomorrow : [tomorow, tomorrow, tommorrow, tommorow, tmr]

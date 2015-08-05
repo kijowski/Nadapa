@@ -6,8 +6,9 @@ open Domain
 
 type ParserConfig = YamlConfig<"config.yaml">
 
-type DateParser(?conf:ParserConfig) =
-  let config = defaultArg conf (ParserConfig())
+type DateParser(?configuration:ParserConfig, ?caseSensitive:bool) =
+  let config = defaultArg configuration (ParserConfig())
+  let caseSens = defaultArg caseSensitive false
 
   let weekdays =
     [
@@ -52,12 +53,12 @@ type DateParser(?conf:ParserConfig) =
   let anyLabel (labels:string seq) =
     labels
     |> Seq.sortBy (fun x -> - x.Length)
-    |> Seq.map skipStringCI
+    |> Seq.map (if caseSens then skipString else skipStringCI)
     |> choice
     .>> spaces
 
   let createP (elements : (string list * 'a) seq) =
-    let parser = if config.caseSensitive then stringReturn else stringCIReturn
+    let parser = if caseSens then stringReturn else stringCIReturn
     elements
     |> Seq.collect(fun (labels, retValue) -> labels |> Seq.map(fun label -> label,retValue))
     |> Seq.sortBy(fun (label,_) -> - label.Length)
@@ -122,14 +123,14 @@ type DateParser(?conf:ParserConfig) =
     pars
     |>> Evaluation.evaluate
 
-  member x.Parse(arg:string, ?baseDate : DateTime) =
+  member x.TryParse(arg:string, ?baseDate : DateTime) =
     let bDate = defaultArg baseDate DateTime.Now
     match run (spaces >>. completeP .>> eof) arg with
       | Success (result, _, _) -> Some(result bDate)
       | Failure(_,_,_) -> None
-
-  member x.ParseAtEnd(arg:string, ?baseDate : DateTime) =
-    let bDate = defaultArg baseDate DateTime.Now
-    match run ( manyCharsTillApply anyChar (attempt(completeP)) (fun x y -> y) .>> eof) arg with
-      | Success (result, _, _) -> Some(result bDate)
-      | Failure(x,y,z) -> None
+  //
+  //member x.ParseAtEnd(arg:string, ?baseDate : DateTime) =
+  //  let bDate = defaultArg baseDate DateTime.Now
+  //  match run ( manyCharsTillApply anyChar (attempt(completeP)) (fun x y -> y) .>> eof) arg with
+  //    | Success (result, _, _) -> Some(result bDate)
+  //    | Failure(x,y,z) -> None
