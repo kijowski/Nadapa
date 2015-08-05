@@ -4,8 +4,13 @@ open FParsec
 open FSharp.Configuration
 open Domain
 
+/// Parser configuration.
+/// To load new YAML based configuration use Load method.
 type ParserConfig = YamlConfig<"config.yaml">
 
+/// <summary>Natural date parser.</summary>
+/// <param name="configuration">Parser configuration.</param>
+/// <param name="caseSensitive">Set to true for case sensitive parsing.</param>
 type DateParser(?configuration:ParserConfig, ?caseSensitive:bool) =
   let config = defaultArg configuration (ParserConfig())
   let caseSens = defaultArg caseSensitive false
@@ -123,14 +128,13 @@ type DateParser(?configuration:ParserConfig, ?caseSensitive:bool) =
     pars
     |>> Evaluation.evaluate
 
+
+  /// <summary>Try to parse date from supplied string.</summary>
+  /// <param name="arg">String containing date to be parsed.</param>
+  /// <param name="baseDate">Optional date used as a base date. Leave default for DateTime.Now</param>
+  /// <returns>Option type containing parsed date.</returns>
   member x.TryParse(arg:string, ?baseDate : DateTime) =
     let bDate = defaultArg baseDate DateTime.Now
     match run (spaces >>. completeP .>> eof) arg with
       | Success (result, _, _) -> Some(result bDate)
       | Failure(_,_,_) -> None
-  //
-  //member x.ParseAtEnd(arg:string, ?baseDate : DateTime) =
-  //  let bDate = defaultArg baseDate DateTime.Now
-  //  match run ( manyCharsTillApply anyChar (attempt(completeP)) (fun x y -> y) .>> eof) arg with
-  //    | Success (result, _, _) -> Some(result bDate)
-  //    | Failure(x,y,z) -> None
