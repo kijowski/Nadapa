@@ -71,7 +71,7 @@ type DateParser(?configuration:ParserConfig, ?caseSensitive:bool) =
     |> choice
     .>> spaces
 
-  let specificDateP =
+  let specificDateP : Parser<SpecificDate,unit>  =
     specificDates |> createP
 
   let relativeDateP : Parser<SpecificDate,unit> =
@@ -115,17 +115,17 @@ type DateParser(?configuration:ParserConfig, ?caseSensitive:bool) =
         | (false,_) -> fail "Date not recognized"
 
   let completeP =
-    let pars, refPar = createParserForwardedToRef()
+    let parser, refPar = createParserForwardedToRef()
     refPar :=
       choice [
         specificDateP |>> Date
         relativeDateP |>> Date
         weekdaysP |>> Weekday
         relativeP |>> Relative
-        absoluteP pars |>> Absolute
+        absoluteP parser |>> Absolute
         dateFormatP |>> Date
       ]
-    pars
+    parser
     |>> Evaluation.evaluate
 
 

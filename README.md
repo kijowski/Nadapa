@@ -31,10 +31,10 @@ open Nadapa
 let parser = DateParser()
 
 // Try to parse string using current timestamp as a starting point
-let result = parser.Parse("2 days from now")
+let result = parser.TryParse("2 days from now")
 
-// You can specify starting point explicitly
-let result = parser.Parse("yesterday", System.DateTime(1984, 1, 5))
+// Optionally you can specify starting point
+let result = parser.TryParse("yesterday", System.DateTime(1984, 1, 5))
 ```
 
 ## API Reference
