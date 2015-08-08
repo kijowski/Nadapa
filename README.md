@@ -35,6 +35,10 @@ let result = parser.TryParse("2 days from now")
 
 // Optionally you can specify starting point
 let result = parser.TryParse("yesterday", System.DateTime(1984, 1, 5))
+
+// You can also make parser case sensitive
+let caseSensitiveParser = DateParser(caseSensitive=true)
+
 ```
 
 ## API Reference
