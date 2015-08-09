@@ -128,7 +128,6 @@ type DateParser(?configuration:ParserConfig, ?caseSensitive:bool) =
     parser
     |>> Evaluation.evaluate
 
-
   /// <summary>Try to parse date from supplied string.</summary>
   /// <param name="arg">String containing date to be parsed.</param>
   /// <param name="baseDate">Optional date used as a base date. Leave default for DateTime.Now</param>

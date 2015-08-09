@@ -31,14 +31,21 @@ open Nadapa
 let parser = DateParser()
 
 // Try to parse string using current timestamp as a starting point
-let result = parser.TryParse("2 days from now")
+let basicCase = parser.TryParse("2 days from now")
+// basicCase = Some (System.DateTime(2015,8,10))
+// assuming that the code was executed on 8 Aug 2015
 
 // Optionally you can specify starting point
-let result = parser.TryParse("yesterday", System.DateTime(1984, 1, 5))
+let withAnchor = parser.TryParse("yesterday", System.DateTime(1984, 1, 5))
+// withAnchor = Some (System.DateTime(1984, 1, 4))
 
 // You can also make parser case sensitive
 let caseSensitiveParser = DateParser(caseSensitive=true)
 
+let goodResult = caseSensitiveParser.TryParse("yesterday", System.DateTime(1984, 1, 5))
+// goodResult = Some (System.DateTime(1984, 1, 4))
+let badResult = caseSensitiveParser.TryParse("yEstErDay", System.DateTime(1984, 1, 5))
+// badResult = None
 ```
 
 ## API Reference
