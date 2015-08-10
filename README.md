@@ -46,12 +46,12 @@ let goodResult = caseSensitiveParser.TryParse("yesterday", System.DateTime(1984,
 // goodResult = Some (System.DateTime(1984, 1, 4))
 let badResult = caseSensitiveParser.TryParse("yEstErDay", System.DateTime(1984, 1, 5))
 // badResult = None
+
+// Additionally you can modify parser config by loading modified YAML file
+let config = ParserConfig()
+config.Load("path/to/config.yaml")
+let parserWithConfig = DateParser(config)
 ```
-
-## API Reference
-Work in progress...
-
-Will be finished once library API stabilize.
 
 ## Authors
 * [Michal Kijowski](michal.kijowski@hotmail.com)
