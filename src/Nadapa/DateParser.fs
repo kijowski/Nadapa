@@ -62,7 +62,7 @@ type DateParser(?configuration:ParserConfig, ?caseSensitive:bool) =
     |> choice
     .>> spaces
 
-  let createP (elements : (string list * 'a) seq) =
+  let createParser (elements : (string list * 'a) seq) =
     let parser = if caseSens then stringReturn else stringCIReturn
     elements
     |> Seq.collect(fun (labels, retValue) -> labels |> Seq.map(fun label -> label,retValue))
@@ -72,25 +72,25 @@ type DateParser(?configuration:ParserConfig, ?caseSensitive:bool) =
     .>> spaces
 
   let specificDateP : Parser<SpecificDate,unit>  =
-    specificDates |> createP
+    specificDates |> createParser
 
   let relativeDateP : Parser<SpecificDate,unit> =
-    relativeDates |> createP
+    relativeDates |> createParser
 
   let relativeOffsetP : Parser<RelativeOffset,unit> =
-    relativeOffsets |> createP
+    relativeOffsets |> createParser
 
   let weekdaysP : Parser<DayOfWeek,unit> =
-    weekdays |> createP
+    weekdays |> createParser
 
   let datePartsP : Parser<DateParts, unit> =
-    dateParts |> createP
+    dateParts |> createParser
 
   let relativeShiftP : Parser<RelativeShift, unit>=
     (weekdays |> List.map(fun (labs, day) -> labs, DayShift day))
     @
     (dateParts |> List.map(fun (labs,part) -> labs, PeriodShift part))
-    |> createP
+    |> createParser
 
   let relativeP =
     relativeOffsetP .>>. relativeShiftP
