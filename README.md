@@ -18,7 +18,7 @@ It is written in F# with the use of [FParsec](http://www.quanttec.com/fparsec/) 
 ## Installation
 To install Nadapa using Nuget, run the following command in the Package Manager Console:
 ```
-PM> Install-Package Nadapa -Pre
+PM> Install-Package Nadapa 
 ```
 Alternatively you can use the following Paket command:
 ```

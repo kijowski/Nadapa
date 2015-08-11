@@ -1,3 +1,6 @@
+#### 1.0.0 - August 11 2015
+* First public release
+
 #### 0.0.3-beta - August 6 2015
 * Stabilized client API
 
