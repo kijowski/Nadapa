@@ -7,7 +7,6 @@
 * [Synopsis](#synopsis)
 * [Installation](#installation)
 * [Usage](#usage)
-* [API Reference](#api-reference)
 * [Authors](#authors)
 * [License](#license)
 
@@ -40,12 +39,12 @@ let withAnchor = parser.TryParse("yesterday", System.DateTime(1984, 1, 5))
 // withAnchor = Some (System.DateTime(1984, 1, 4))
 
 // You can also make parser case sensitive
-let caseSensitiveParser = DateParser(caseSensitive=true)
+let csParser = DateParser(caseSensitive=true)
 
-let goodResult = caseSensitiveParser.TryParse("yesterday", System.DateTime(1984, 1, 5))
-// goodResult = Some (System.DateTime(1984, 1, 4))
-let badResult = caseSensitiveParser.TryParse("yEstErDay", System.DateTime(1984, 1, 5))
-// badResult = None
+let good = csParser.TryParse("yesterday", System.DateTime(1984, 1, 5))
+// good = Some (System.DateTime(1984, 1, 4))
+let bad = csParser.TryParse("yEstErDay", System.DateTime(1984, 1, 5))
+// bad = None
 
 // Additionally you can modify parser config by loading modified YAML file
 let config = ParserConfig()
